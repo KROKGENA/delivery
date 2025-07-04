@@ -98,7 +98,7 @@
         underground: document.getElementById('underground').checked,
         height_limit: document.getElementById('height_limit').value || null,
         precise_time: document.getElementById('precise_time').checked,
-        delivery_time: document.getElementById('delivery_time').value || null,
+        delivery_time: document.getElementById('precise_time').checked ? document.getElementById('delivery_time').value : null,
         need_movers: document.getElementById('need_movers').checked,
         floor: document.getElementById('floor').value || null,
         only_unload: document.querySelector('input[name="only_unload"]:checked')?.value,
