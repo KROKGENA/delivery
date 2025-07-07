@@ -35,7 +35,6 @@ function getMoversCost(data) {
 
   let total = 0;
 
-  // крупный формат
   if (large > 0) {
     const liftAllowed = ["100x200", "100x260", "100x280"].includes(format);
     if (isOnlyUnload) {
@@ -48,7 +47,6 @@ function getMoversCost(data) {
     }
   }
 
-  // стандартный формат
   if (standard > 0) {
     if (isOnlyUnload) {
       total += standard * 7;
@@ -77,9 +75,7 @@ function calculateDelivery() {
   let vehicleName = "";
   let baseLine = "";
 
-  // Высота
   if (data.underground && data.height_limit && parseFloat(data.height_limit) < 2.2) {
-    // нужно делить на 1.5т и 1т
     let left = totalWeight;
     let parts = [];
     while (left > 0) {
@@ -97,7 +93,7 @@ function calculateDelivery() {
     }
 
     parts.forEach(w => {
-      const v = selectVehicle(w, "верхняя"); // безопасный выбор
+      const v = selectVehicle(w, "верхняя");
       if (!v) return;
       const dist = Math.max(0, data.deliveryDistance - 40);
       deliveryCost += v.minTariff + dist * v.perKm + getLoadingSurcharge(v, data.loading_type);
@@ -131,23 +127,46 @@ function calculateDelivery() {
 
   moversCost = getMoversCost(data);
 
-  const deliveryHtml = `
-    <h3>🚚 Расчёт стоимости доставки</h3>
-    <p><strong>Транспорт:</strong> ${vehicleName}</p>
-    <p><strong>Общий вес:</strong> ${totalWeight} кг</p>
-    <p><strong>Тип загрузки:</strong> ${data.loading_type}</p>
-    <p><strong>Расстояние:</strong> ${data.deliveryDistance.toFixed(2)} км</p>
-    ${baseLine}
+  const compactHtml = `
+    <p><strong>🚚 Доставка:</strong> ${deliveryCost.toLocaleString()} ₽</p>
+    <p><strong>👷 Грузчики:</strong> ${moversCost.toLocaleString()} ₽</p>
+    <hr>
+    <h3>Итого: ${(deliveryCost + moversCost).toLocaleString()} ₽</h3>
+    <p><a href="#" onclick="toggleDetails(event)">Показать подробности</a></p>
+    <div id="details_block" style="display:none;">
+      <h3>🚚 Расчёт стоимости доставки</h3>
+      <p><strong>Транспорт:</strong> ${vehicleName}</p>
+      <p><strong>Общий вес:</strong> ${totalWeight} кг</p>
+      <p><strong>Тип загрузки:</strong> ${data.loading_type}</p>
+      <p><strong>Расстояние:</strong> ${data.deliveryDistance.toFixed(2)} км</p>
+      ${baseLine}
+      ${moversCost > 0 ? `<h3>👷 Грузчики:</h3><p>${moversCost.toLocaleString()} ₽</p>` : ""}
+    </div>
   `;
 
-  const moversHtml = moversCost > 0 ? `
-    <h3>👷 Грузчики:</h3>
-    <p>${moversCost.toLocaleString()} ₽</p>
-  ` : "";
+  document.getElementById("delivery_result").innerHTML = compactHtml;
+  document.getElementById("movers_result").innerHTML = "";
+  document.getElementById("total_result").innerHTML = "";
+}
 
-  document.getElementById("delivery_result").innerHTML = deliveryHtml;
-  document.getElementById("movers_result").innerHTML = moversHtml;
-  document.getElementById("total_result").innerHTML = `
-    <hr><h3>Итого: ${(deliveryCost + moversCost).toLocaleString()} ₽</h3>
-  `;
+// 🔐 Раскрытие подробностей по паролю
+function toggleDetails(e) {
+  e.preventDefault();
+  const block = document.getElementById("details_block");
+  const link = e.target;
+
+  if (block.style.display === "block") {
+    block.style.display = "none";
+    link.textContent = "Показать подробности";
+    return;
+  }
+
+  const correctPassword = "2024";
+  const entered = prompt("Введите пароль для просмотра подробностей:");
+  if (entered === correctPassword) {
+    block.style.display = "block";
+    link.textContent = "Скрыть подробности";
+  } else {
+    alert("Неверный пароль");
+  }
 }
