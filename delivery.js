@@ -48,69 +48,114 @@ function calculateDelivery() {
   const loadingType = data.loading_type;
   const distance = data.deliveryDistance || 0;
   const extraDistance = Math.max(0, distance - 40);
+  const isUnderground = data.underground && parseFloat(data.height_limit) < 2.2;
 
-  let heightRestricted = false;
-  let forceSmallVehicle = false;
-  let trips = 1;
+  let vehiclesUsed = [];
+  let cost = 0;
 
-  // ⛔ Подземный паркинг — ограничение по высоте < 2.2 м
-  if (data.underground && parseFloat(data.height_limit) < 2.2) {
-    heightRestricted = true;
-    forceSmallVehicle = true;
-    if (totalWeight > 1500) {
-      trips = 2;
+  if (isUnderground) {
+    // 🚧 Паркинг < 2.2 м — считаем по 1.5т и 1т
+    let remaining = totalWeight;
+    const v15 = vehicles.find(v => v.name.includes("до 1.5т") && v.loadingTypes.includes(loadingType));
+    const v10 = vehicles.find(v => v.name.includes("до 1т") && v.loadingTypes.includes(loadingType));
+
+    const count15 = Math.floor(remaining / 1500);
+    remaining -= count15 * 1500;
+    const count10 = remaining > 0 ? 1 : 0;
+
+    for (let i = 0; i < count15; i++) vehiclesUsed.push(v15);
+    if (count10) vehiclesUsed.push(v10);
+
+    vehiclesUsed.forEach(vehicle => {
+      let localCost = vehicle.minTariff + extraDistance * vehicle.perKm;
+
+      const loadingSurcharge = getLoadingSurcharge(vehicle, loadingType);
+      localCost += loadingSurcharge;
+
+      if (data.return_pallets) localCost += 2500;
+      if (data.precise_time) localCost += 2500;
+      if (isUnderground) localCost += 1500;
+
+      cost += localCost;
+    });
+  } else {
+    // 🚚 Обычный случай — одна машина
+    const vehicle = selectVehicle(totalWeight, loadingType);
+    if (!vehicle) {
+      document.getElementById("result").innerHTML = "<p style='color:red;'>Нет подходящего транспорта под эти параметры.</p>";
+      return;
     }
+
+    vehiclesUsed.push(vehicle);
+
+    cost = vehicle.minTariff + extraDistance * vehicle.perKm;
+
+    const loadingSurcharge = getLoadingSurcharge(vehicle, loadingType);
+    cost += loadingSurcharge;
+
+    if (data.return_pallets) cost += 2500;
+    if (data.precise_time) cost += 2500;
+    if (data.underground) cost += 1500;
   }
 
-  // Выбор транспорта
-  const vehicle = selectVehicle(totalWeight, loadingType, forceSmallVehicle ? 1500 : null);
+  // === 💪 Расчёт грузчиков ===
+  let moversCost = 0;
 
-  if (!vehicle) {
-    document.getElementById("result").innerHTML = "<p style='color:red;'>Нет подходящего транспорта под эти параметры.</p>";
-    return;
+  if (data.need_movers) {
+    const floor = parseInt(data.floor) || 1;
+    const hasLift = data.lift === "true";
+    const onlyUnload = data.only_unload === "true";
+
+    const largeWeight = data.weight_large;
+    const standardWeight = data.weight_standard;
+    const format = data.large_format;
+    const isLiftFormat = ["100x200", "100x260", "100x280"].includes(format);
+
+    // === 1. Крупная плитка ===
+    if (largeWeight > 0) {
+      if (onlyUnload) {
+        moversCost += 20 * largeWeight;
+      } else if (isLiftFormat && hasLift) {
+        moversCost += 30 * largeWeight;
+      } else {
+        let rate = 50;
+        if (floor > 20) rate = 90;
+        else if (floor > 10) rate = 70;
+        else if (floor > 5) rate = 60;
+        moversCost += rate * largeWeight;
+      }
+    }
+
+    // === 2. Стандартная плитка ===
+    if (standardWeight > 0) {
+      if (onlyUnload) {
+        moversCost += 7 * standardWeight;
+      } else if (hasLift) {
+        moversCost += 9 * standardWeight;
+      } else {
+        let rate = 15;
+        if (floor > 20) rate = 50;
+        else if (floor > 10) rate = 30;
+        else if (floor > 5) rate = 20;
+        moversCost += rate * standardWeight;
+      }
+    }
+
+    cost += moversCost;
   }
 
-  // 💰 Базовая стоимость
-  let cost = vehicle.minTariff + extraDistance * vehicle.perKm;
-
-  // 💰 Надбавка за загрузку
-  const loadingSurcharge = getLoadingSurcharge(vehicle, loadingType);
-  cost += loadingSurcharge;
-
-  // 💰 Возврат тары
-  if (data.return_pallets) {
-    cost += 2500;
-  }
-
-  // 💰 Подземный паркинг
-  if (data.underground) {
-    cost += 1500;
-  }
-
-  // 💰 Точное время
-  if (data.precise_time) {
-    cost += 2500;
-  }
-
-  // 💰 Умножение на количество рейсов
-  if (trips > 1) {
-    cost *= trips;
-  }
-
-  // 📦 Формирование результата
+  // 🖥 Вывод
   let resultHtml = `
     <h3>Расчёт стоимости доставки</h3>
-    <p><strong>Транспорт:</strong> ${vehicle.name}</p>
     <p><strong>Общий вес:</strong> ${totalWeight} кг</p>
     <p><strong>Тип загрузки:</strong> ${loadingType}</p>
     <p><strong>Расстояние:</strong> ${distance.toFixed(2)} км</p>
-    <p><strong>Базовый тариф:</strong> ${vehicle.minTariff.toLocaleString()} ₽</p>
-    <p><strong>Доп. км:</strong> ${extraDistance.toFixed(2)} км × ${vehicle.perKm} ₽ = ${(extraDistance * vehicle.perKm).toLocaleString()} ₽</p>
-    ${loadingSurcharge > 0 ? `<p><strong>Надбавка за загрузку (${loadingType}):</strong> ${loadingSurcharge.toLocaleString()} ₽</p>` : ""}
-    ${data.return_pallets ? `<p><strong>Возврат тары:</strong> 2 500 ₽</p>` : ""}
-    ${data.underground ? `<p><strong>Подземный паркинг:</strong> 1 500 ₽</p>` : ""}
-    ${data.precise_time ? `<p><strong>Доставка к точному времени:</strong> 2 500 ₽</p>` : ""}
-    ${trips > 1 ? `<p><strong>Два рейса из-за ограничения по высоте и веса</strong></p>` : ""}
+    <p><strong>Кол-во рейсов:</strong> ${vehiclesUsed.length}</p>
+    <ul>${vehiclesUsed.map(v => `<li>${v.name}</li>`).join("")}</ul>
+    ${data.return_pallets ? `<p>Возврат тары: 2 500 ₽ × ${vehiclesUsed.length}</p>` : ""}
+    ${data.precise_time ? `<p>Доставка к точному времени: 2 500 ₽ × ${vehiclesUsed.length}</p>` : ""}
+    ${data.underground ? `<p>Подземный паркинг: 1 500 ₽ × ${vehiclesUsed.length}</p>` : ""}
+    ${data.need_movers ? `<p><strong>Грузчики:</strong> ${Math.round(moversCost).toLocaleString()} ₽</p>` : ""}
     <hr>
     <h3>Итого: ${Math.round(cost).toLocaleString()} ₽</h3>
   `;
