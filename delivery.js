@@ -1,5 +1,6 @@
-<script>
-// 🚚 Список доступных автомобилей
+// === delivery.js ===
+
+// Список транспорта
 const vehicles = [
   {
     name: "а/м до 1т",
@@ -83,53 +84,46 @@ const vehicles = [
   }
 ];
 
-// 🔍 Поиск подходящего авто по весу и типу загрузки
+// Выбор подходящего транспорта
 function selectVehicle(totalWeight, loadingType) {
   return vehicles.find(v => v.maxWeight >= totalWeight && v.loadingTypes.includes(loadingType));
 }
 
-// 📦 Основная функция расчёта стоимости доставки
+// Основная функция расчёта
 function calculateDelivery() {
-  // Читаем данные из формы
-  const weightStandard = +document.getElementById("weight_standard").value || 0;
-  const weightLarge = +document.getElementById("weight_large").value || 0;
-  const loadingType = document.getElementById("loading_type").value;
+  if (!window.formData) return alert('Сначала сохраните параметры');
 
-  const totalWeight = weightStandard + weightLarge;
-  const distance = window.deliveryDistance || 0;
+  const data = window.formData;
+  const totalWeight = data.weight_standard + data.weight_large;
+  const loadingType = data.loading_type;
+  const distance = data.deliveryDistance || 0;
   const extraDistance = Math.max(distance - 40, 0);
 
-  // Ищем транспорт
   const vehicle = selectVehicle(totalWeight, loadingType);
 
   if (!vehicle) {
-    document.getElementById("result").innerHTML = "<p style='color:red;'>Нет подходящего транспорта под эти параметры.</p>";
+    document.getElementById("result").innerHTML = "<p style='color:red;'>Нет подходящего транспорта для этих параметров.</p>";
     return;
   }
 
-  // Базовый тариф
   let cost = vehicle.minTariff;
-
-  // Расчёт за каждый лишний км после 40
   cost += extraDistance * vehicle.perKm;
 
-  // Добавляем надбавку, если тип погрузки верхняя/боковая
   if (["верхняя", "боковая"].includes(loadingType)) {
     cost += vehicle.surcharge;
   }
 
-  // Вывод
+  // Выводим результат
   document.getElementById("result").innerHTML = `
     <h3>Расчёт стоимости доставки</h3>
-    <p><strong>Выбран транспорт:</strong> ${vehicle.name}</p>
-    <p><strong>Общий вес:</strong> ${totalWeight} кг</p>
+    <p><strong>Транспорт:</strong> ${vehicle.name}</p>
+    <p><strong>Вес:</strong> ${totalWeight} кг</p>
     <p><strong>Тип загрузки:</strong> ${loadingType}</p>
     <p><strong>Расстояние:</strong> ${distance.toFixed(2)} км</p>
     <p><strong>Базовый тариф:</strong> ${vehicle.minTariff.toLocaleString()} ₽</p>
-    <p><strong>Доп. расстояние:</strong> ${extraDistance.toFixed(2)} км × ${vehicle.perKm} ₽ = ${(extraDistance * vehicle.perKm).toLocaleString()} ₽</p>
+    <p><strong>Доп. км:</strong> ${extraDistance.toFixed(2)} км × ${vehicle.perKm} ₽ = ${(extraDistance * vehicle.perKm).toLocaleString()} ₽</p>
     ${["верхняя", "боковая"].includes(loadingType) ? `<p><strong>Надбавка за загрузку:</strong> ${vehicle.surcharge.toLocaleString()} ₽</p>` : ""}
     <hr>
     <h3>Итого: ${Math.round(cost).toLocaleString()} ₽</h3>
   `;
 }
-</script>
