@@ -1,140 +1,134 @@
-
-// delivery.js
-
 const vehicles = [
-  { name: "а/м до 1т", maxWeight: 1000, loadingTypes: ["верхняя", "боковая", "любая"], surcharge: {верхняя: 1500, боковая: 1500}, minTariff: 4000, perKm: 100 },
-  { name: "а/м до 1.5т", maxWeight: 1500, loadingTypes: ["верхняя", "боковая", "любая"], surcharge: {верхняя: 1500, боковая: 1500}, minTariff: 4000, perKm: 100 },
-  { name: "а/м до 3т", maxWeight: 3000, loadingTypes: ["верхняя", "боковая", "любая"], surcharge: {верхняя: 1500, боковая: 1500}, minTariff: 4500, perKm: 115 },
-  { name: "а/м 5т", maxWeight: 5000, loadingTypes: ["верхняя", "боковая", "любая"], surcharge: {верхняя: 2500, боковая: 2000}, minTariff: 5000, perKm: 144 },
-  { name: "а/м 5т гидролифт", maxWeight: 5000, loadingTypes: ["гидролифт"], surcharge: {гидролифт: 2000}, minTariff: 6000, perKm: 154 },
-  { name: "а/м 10т", maxWeight: 10000, loadingTypes: ["верхняя", "боковая", "любая"], surcharge: {верхняя: 3000, боковая: 2500}, minTariff: 8000, perKm: 210 },
-  { name: "Еврофура 20т", maxWeight: 20000, loadingTypes: ["верхняя", "боковая", "любая"], surcharge: {верхняя: 3500, боковая: 3000}, minTariff: 10000, perKm: 250 },
-  { name: "Манипулятор 5т", maxWeight: 5000, loadingTypes: ["manipulator"], surcharge: {manipulator: 0}, minTariff: 15000, perKm: 240 },
-  { name: "Манипулятор 10т", maxWeight: 10000, loadingTypes: ["manipulator"], surcharge: {manipulator: 0}, minTariff: 20000, perKm: 240 },
-  { name: "Манипулятор 15т", maxWeight: 15000, loadingTypes: ["manipulator"], surcharge: {manipulator: 0}, minTariff: 25000, perKm: 240 }
+  { name: "а/м до 1т", maxWeight: 1000, loadingTypes: ["верхняя", "боковая", "любая"], baseSurcharge: 1000, minTariff: 4000, perKm: 100 },
+  { name: "а/м до 1.5т", maxWeight: 1500, loadingTypes: ["верхняя", "боковая", "любая"], baseSurcharge: 1500, minTariff: 4000, perKm: 100 },
+  { name: "а/м до 3т", maxWeight: 3000, loadingTypes: ["верхняя", "боковая", "любая"], baseSurcharge: 1500, minTariff: 4500, perKm: 115 },
+  { name: "а/м 5т", maxWeight: 5000, loadingTypes: ["верхняя", "боковая", "любая"], baseSurcharge: 0, minTariff: 5000, perKm: 144 },
+  { name: "а/м 5т гидролифт", maxWeight: 5000, loadingTypes: ["гидролифт"], baseSurcharge: 2000, minTariff: 6000, perKm: 154 },
+  { name: "а/м 10т", maxWeight: 10000, loadingTypes: ["верхняя", "боковая", "любая"], baseSurcharge: 0, minTariff: 8000, perKm: 210 },
+  { name: "Еврофура 20т", maxWeight: 20000, loadingTypes: ["верхняя", "боковая", "любая"], baseSurcharge: 0, minTariff: 10000, perKm: 250 },
+  { name: "Манипулятор 5т", maxWeight: 5000, loadingTypes: ["manipulator"], baseSurcharge: 0, minTariff: 15000, perKm: 240 },
+  { name: "Манипулятор 10т", maxWeight: 10000, loadingTypes: ["manipulator"], baseSurcharge: 0, minTariff: 20000, perKm: 240 },
+  { name: "Манипулятор 15т", maxWeight: 15000, loadingTypes: ["manipulator"], baseSurcharge: 0, minTariff: 25000, perKm: 240 }
 ];
 
 function selectVehicle(weight, loadingType) {
   return vehicles.find(v => v.maxWeight >= weight && v.loadingTypes.includes(loadingType));
 }
 
+function getLoadingSurcharge(vehicle, loadingType) {
+  const surchargeMap = {
+    "а/м до 3т": { верхняя: 1500, боковая: 1500 },
+    "а/м 5т": { верхняя: 2500, боковая: 2000 },
+    "а/м 10т": { верхняя: 3000, боковая: 2500 },
+    "Еврофура 20т": { верхняя: 3500, боковая: 3000 }
+  };
+  return surchargeMap[vehicle.name]?.[loadingType] || 0;
+}
+
 function calculateMoversCost(data) {
-  if (!data.need_movers) return { cost: 0, details: "" };
+  if (!data.need_movers) return 0;
 
-  const floor = parseInt(data.floor || 1);
-  const lift = data.lift === "true";
-  const onlyUnload = data.only_unload === "true";
+  const floor = parseInt(data.floor);
+  const safeFloor = isNaN(floor) ? 1 : floor;
+  const hasLift = data.lift === "true";
+  const totalStandard = data.weight_standard || 0;
+  const totalLarge = data.weight_large || 0;
+  const format = data.large_format || "";
+  const isOnlyUnload = data.only_unload === "true";
 
-  let totalCost = 0;
-  let details = "<h4>Грузчики</h4>";
+  let cost = 0;
 
-  const largeWeight = +data.weight_large || 0;
-  const standardWeight = +data.weight_standard || 0;
-
-  const largeFormat = data.large_format || "";
-  const liftFormats = ["100x200", "100x260", "100x280"];
-  const canLift = lift && liftFormats.includes(largeFormat);
-
-  // Крупный формат
-  if (largeWeight > 0) {
-    if (onlyUnload) {
-      totalCost += largeWeight * 20;
-      details += `<p>Крупный формат: только выгрузка: ${largeWeight} кг × 20 ₽ = ${largeWeight * 20} ₽</p>`;
+  // Выгрузка стандарт
+  if (totalStandard) {
+    if (isOnlyUnload) {
+      cost += totalStandard * 7;
     } else {
-      if (canLift) {
-        totalCost += largeWeight * 30;
-        details += `<p>Крупный формат: выгрузка и подъём (лифт): ${largeWeight} кг × 30 ₽ = ${largeWeight * 30} ₽</p>`;
-      } else {
-        let rate = floor <= 5 ? 50 : floor <= 10 ? 60 : floor <= 20 ? 70 : 90;
-        totalCost += largeWeight * rate;
-        details += `<p>Крупный формат: выгрузка и подъём (этаж ${floor}): ${largeWeight} кг × ${rate} ₽ = ${largeWeight * rate} ₽</p>`;
-      }
+      if (hasLift) cost += totalStandard * 9;
+      else if (safeFloor <= 5) cost += totalStandard * 15;
+      else if (safeFloor <= 10) cost += totalStandard * 20;
+      else if (safeFloor <= 20) cost += totalStandard * 30;
+      else cost += totalStandard * 50;
     }
   }
 
-  // Стандартный формат
-  if (standardWeight > 0) {
-    if (onlyUnload) {
-      totalCost += standardWeight * 7;
-      details += `<p>Обычный формат: только выгрузка: ${standardWeight} кг × 7 ₽ = ${standardWeight * 7} ₽</p>`;
+  // Выгрузка крупный формат
+  if (totalLarge) {
+    if (isOnlyUnload) {
+      cost += totalLarge * 20;
     } else {
-      if (lift) {
-        totalCost += standardWeight * 9;
-        details += `<p>Обычный формат: выгрузка и подъём (лифт): ${standardWeight} кг × 9 ₽ = ${standardWeight * 9} ₽</p>`;
-      } else {
-        let rate = floor <= 5 ? 15 : floor <= 10 ? 20 : floor <= 20 ? 30 : 50;
-        totalCost += standardWeight * rate;
-        details += `<p>Обычный формат: выгрузка и подъём (этаж ${floor}): ${standardWeight} кг × ${rate} ₽ = ${standardWeight * rate} ₽</p>`;
-      }
+      const canUseLift = ["100x200", "100x260", "100x280"].includes(format);
+      if (canUseLift && hasLift) {
+        cost += totalLarge * 30;
+      } else if (safeFloor <= 5) cost += totalLarge * 50;
+      else if (safeFloor <= 10) cost += totalLarge * 60;
+      else if (safeFloor <= 20) cost += totalLarge * 70;
+      else cost += totalLarge * 90;
     }
   }
 
-  return { cost: totalCost, details };
+  return cost;
 }
 
 function calculateDelivery() {
-  const data = window.formData;
-  if (!data) return alert("Сначала сохраните параметры");
-
-  const weight = (+data.weight_standard || 0) + (+data.weight_large || 0);
-  const loadingType = data.loading_type;
-  const distance = +data.deliveryDistance || 0;
-  const extraKm = Math.max(0, distance - 40);
-
-  let vehicle = selectVehicle(weight, loadingType);
-  let note = "";
-
-  // Паркинг < 2.2м — ограничение
-  if (data.underground && parseFloat(data.height_limit || 0) < 2.2) {
-    vehicle = selectVehicle(1500, loadingType);
-    const trips = Math.ceil(weight / 1500);
-    note = ` (ограничение высоты, ${trips} рейса на ${vehicle.name})`;
-  }
-
-  if (!vehicle) {
-    document.getElementById("delivery_result").innerHTML = "<p style='color:red;'>Нет подходящего транспорта</p>";
+  if (!window.formData) {
+    alert("Сначала сохраните параметры");
     return;
   }
 
-  let cost = vehicle.minTariff;
-  cost += extraKm * vehicle.perKm;
+  const data = window.formData;
+  const totalWeight = data.weight_standard + data.weight_large;
+  const loadingType = data.loading_type;
+  const distance = data.deliveryDistance || 0;
+  const extraDistance = Math.max(0, distance - 40);
 
-  let surcharge = vehicle.surcharge?.[loadingType] || 0;
-  cost += surcharge;
+  let actualWeight = totalWeight;
+  let actualLoading = loadingType;
 
-  if (data.return_pallets) {
-    cost += 2500;
+  let vehicle = selectVehicle(actualWeight, loadingType);
+
+  // Подземный паркинг с ограничением по высоте
+  if (data.underground && parseFloat(data.height_limit) < 2.2) {
+    const maxVehicle = vehicles.find(v => v.maxWeight === 1500);
+    const trips = Math.ceil(actualWeight / 1500);
+    actualWeight = Math.ceil(actualWeight / trips);
+    vehicle = maxVehicle;
   }
 
-  if (data.underground) {
-    cost += 1500;
+  if (!vehicle) {
+    document.getElementById("delivery_result").innerHTML = "<p style='color:red;'>Нет подходящего транспорта.</p>";
+    return;
   }
 
-  if (data.precise_time) {
-    cost += 2500;
-  }
+  const trips = Math.ceil(totalWeight / vehicle.maxWeight);
+  let cost = vehicle.minTariff * trips + extraDistance * vehicle.perKm * trips;
+
+  const loadingSurcharge = getLoadingSurcharge(vehicle, loadingType);
+  if (["верхняя", "боковая"].includes(loadingType)) cost += loadingSurcharge;
+
+  if (data.return_pallets) cost += 2500;
+  if (data.underground) cost += 1500;
+  if (data.precise_time) cost += 2500;
+
+  const moversCost = calculateMoversCost(data);
+  const totalCost = cost + moversCost;
 
   const deliveryHtml = `
-    <h3>Доставка</h3>
-    <p><strong>Транспорт:</strong> ${vehicle.name}${note}</p>
-    <p><strong>Общий вес:</strong> ${weight} кг</p>
+    <h3>Расчёт стоимости доставки</h3>
+    <p><strong>Транспорт:</strong> ${vehicle.name}</p>
+    <p><strong>Общий вес:</strong> ${totalWeight} кг</p>
     <p><strong>Тип загрузки:</strong> ${loadingType}</p>
     <p><strong>Расстояние:</strong> ${distance.toFixed(2)} км</p>
-    <p><strong>Базовый тариф:</strong> ${vehicle.minTariff.toLocaleString()} ₽</p>
-    <p>Доп. км: ${extraKm.toFixed(2)} × ${vehicle.perKm} ₽ = ${(extraKm * vehicle.perKm).toLocaleString()} ₽</p>
-    ${surcharge ? `<p>Надбавка за загрузку (${loadingType}): ${surcharge.toLocaleString()} ₽</p>` : ""}
-    ${data.return_pallets ? "<p>Возврат тары: 2 500 ₽</p>" : ""}
-    ${data.underground ? "<p>Подземный паркинг: 1 500 ₽</p>" : ""}
-    ${data.precise_time ? "<p>Доставка к точному времени: 2 500 ₽</p>" : ""}
-    <p><strong>Итого за доставку: ${Math.round(cost).toLocaleString()} ₽</strong></p>
+    <p><strong>Базовый тариф:</strong> ${vehicle.minTariff.toLocaleString()} ₽ × ${trips} = ${(vehicle.minTariff * trips).toLocaleString()} ₽</p>
+    <p><strong>Доп. км:</strong> ${extraDistance.toFixed(2)} км × ${vehicle.perKm} ₽ × ${trips} = ${(extraDistance * vehicle.perKm * trips).toLocaleString()} ₽</p>
+    ${loadingSurcharge ? `<p><strong>Надбавка за загрузку (${loadingType}):</strong> ${loadingSurcharge.toLocaleString()} ₽</p>` : ""}
+    ${data.return_pallets ? `<p><strong>Возврат тары:</strong> 2 500 ₽</p>` : ""}
+    ${data.underground ? `<p><strong>Подземный паркинг:</strong> 1 500 ₽</p>` : ""}
+    ${data.precise_time ? `<p><strong>Доставка к точному времени:</strong> 2 500 ₽</p>` : ""}
   `;
 
-  const { cost: moversCost, details: moversDetails } = calculateMoversCost(data);
-
-  const moversHtml = moversCost
-    ? `${moversDetails}<p><strong>Итого за грузчиков: ${moversCost.toLocaleString()} ₽</strong></p>`
-    : "";
+  const moversHtml = moversCost > 0 ? `<p><strong>Грузчики:</strong> ${moversCost.toLocaleString()} ₽</p>` : "";
 
   document.getElementById("delivery_result").innerHTML = deliveryHtml;
   document.getElementById("movers_result").innerHTML = moversHtml;
+  document.getElementById("total_result").innerHTML = `<hr><h3>Итого: ${totalCost.toLocaleString()} ₽</h3>`;
 }
