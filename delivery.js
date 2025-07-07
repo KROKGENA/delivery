@@ -169,3 +169,77 @@ function toggleDetails(e) {
     alert("Неверный пароль");
   }
 }
+// === 📌 Фикс: если "любая", надбавка не начисляется
+function getLoadingSurcharge(vehicle, loadingType) {
+  if (loadingType === "любая") return 0;
+  const wt = vehicle.maxWeight;
+  if (wt <= 3000) return 1500;
+  if (wt === 5000) return loadingType === "боковая" ? 2000 : 2500;
+  if (wt === 10000) return loadingType === "боковая" ? 2500 : 3000;
+  if (wt === 20000) return loadingType === "боковая" ? 3000 : 3500;
+  return 0;
+}
+
+// === ⚙️ Админка
+function openAdmin() {
+  const pw = prompt("Введите админ-пароль:");
+  if (pw !== "admin2024") {
+    alert("Неверный пароль");
+    return;
+  }
+
+  const panel = document.getElementById("admin_panel");
+  panel.innerHTML = "<h3>⚙️ Редактирование тарифов</h3>";
+  const table = document.createElement("table");
+  table.style.borderCollapse = "collapse";
+  table.innerHTML = `
+    <tr><th style="text-align:left">Транспорт</th><th>Базовый тариф (₽)</th><th>₽/км</th></tr>
+  `;
+
+  vehicles.forEach((v, i) => {
+    table.innerHTML += `
+      <tr>
+        <td>${v.name}</td>
+        <td><input type="number" id="minTariff_${i}" value="${v.minTariff}" style="width:80px"></td>
+        <td><input type="number" id="perKm_${i}" value="${v.perKm}" style="width:60px"></td>
+      </tr>
+    `;
+  });
+
+  panel.appendChild(table);
+
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "💾 Сохранить";
+  saveBtn.style.marginTop = "10px";
+  saveBtn.onclick = () => {
+    vehicles.forEach((v, i) => {
+      v.minTariff = parseInt(document.getElementById(`minTariff_${i}`).value) || v.minTariff;
+      v.perKm = parseInt(document.getElementById(`perKm_${i}`).value) || v.perKm;
+    });
+    localStorage.setItem("vehicleTariffs", JSON.stringify(vehicles));
+    alert("Сохранено!");
+  };
+
+  panel.appendChild(saveBtn);
+  panel.style.display = "block";
+}
+
+// === 🚀 Автозагрузка тарифов при старте
+(function loadSavedTariffs() {
+  const saved = localStorage.getItem("vehicleTariffs");
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        parsed.forEach((v, i) => {
+          if (vehicles[i]) {
+            vehicles[i].minTariff = v.minTariff;
+            vehicles[i].perKm = v.perKm;
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("Ошибка загрузки тарифов", e);
+    }
+  }
+})();
