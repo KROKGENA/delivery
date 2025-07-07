@@ -149,7 +149,6 @@ function calculateDelivery() {
   document.getElementById("total_result").innerHTML = "";
 }
 
-// 🔐 Раскрытие подробностей по паролю
 function toggleDetails(e) {
   e.preventDefault();
   const block = document.getElementById("details_block");
