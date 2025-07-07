@@ -15,7 +15,9 @@ function selectVehicle(weight, loadingType) {
   return vehicles.find(v => v.maxWeight >= weight && v.loadingTypes.includes(loadingType));
 }
 
+// 📌 Фикс: если "любая", надбавка = 0
 function getLoadingSurcharge(vehicle, loadingType) {
+  if (loadingType === "любая") return 0;
   const wt = vehicle.maxWeight;
   if (wt <= 3000) return 1500;
   if (wt === 5000) return loadingType === "боковая" ? 2000 : 2500;
@@ -119,7 +121,7 @@ function calculateDelivery() {
     baseLine = `
       <p><strong>Базовый тариф:</strong> ${vehicle.minTariff.toLocaleString()} ₽</p>
       <p><strong>Доп. км:</strong> ${extraKm.toFixed(2)} км × ${vehicle.perKm} ₽ = ${(extraKm * vehicle.perKm).toLocaleString()} ₽</p>
-      <p><strong>Надбавка за загрузку (${data.loading_type}):</strong> ${surcharge.toLocaleString()} ₽</p>
+      ${surcharge > 0 ? `<p><strong>Надбавка за загрузку (${data.loading_type}):</strong> ${surcharge.toLocaleString()} ₽</p>` : ""}
       ${data.return_pallets ? `<p>Возврат тары: 2 500 ₽</p>` : ""}
       ${data.precise_time ? `<p>Доставка к точному времени: 2 500 ₽</p>` : ""}
     `;
@@ -169,18 +171,8 @@ function toggleDetails(e) {
     alert("Неверный пароль");
   }
 }
-// === 📌 Фикс: если "любая", надбавка не начисляется
-function getLoadingSurcharge(vehicle, loadingType) {
-  if (loadingType === "любая") return 0;
-  const wt = vehicle.maxWeight;
-  if (wt <= 3000) return 1500;
-  if (wt === 5000) return loadingType === "боковая" ? 2000 : 2500;
-  if (wt === 10000) return loadingType === "боковая" ? 2500 : 3000;
-  if (wt === 20000) return loadingType === "боковая" ? 3000 : 3500;
-  return 0;
-}
 
-// === ⚙️ Админка
+// ⚙️ Админка
 function openAdmin() {
   const pw = prompt("Введите админ-пароль:");
   if (pw !== "admin2024") {
@@ -224,7 +216,7 @@ function openAdmin() {
   panel.style.display = "block";
 }
 
-// === 🚀 Автозагрузка тарифов при старте
+// 🚀 Автозагрузка тарифов при старте
 (function loadSavedTariffs() {
   const saved = localStorage.getItem("vehicleTariffs");
   if (saved) {
