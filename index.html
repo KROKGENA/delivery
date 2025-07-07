@@ -87,6 +87,10 @@
     <button type="button" onclick="viewSavedParams()">Посмотреть параметры</button>
   </form>
 
+  <!-- ⚙️ Кнопка и панель админки -->
+  <button onclick="openAdmin()">⚙️ Админка</button>
+  <div id="admin_panel" style="display:none; margin-top:20px;"></div>
+
   <!-- Вывод расчётов -->
   <div id="delivery_result" style="margin-top: 20px;"></div>
   <div id="movers_result"></div>
@@ -98,7 +102,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.min.js"></script>
 
-  <!-- Логика карты и формы -->
+  <!-- Скрипт карты и формы -->
   <script>
     const warehouse = [54.907129, 38.054109];
     const map = L.map('map').setView(warehouse, 10);
@@ -139,8 +143,6 @@
           }
         });
     }
-<button onclick="openAdmin()">⚙️ Админка</button>
-<div id="admin_panel" style="display:none; margin-top:20px;"></div>
 
     function drawRoute(destLat, destLon) {
       if (routeControl) map.removeControl(routeControl);
@@ -219,7 +221,7 @@
     }
   </script>
 
-  <!-- Delivery logic -->
+  <!-- delivery logic -->
   <script src="delivery.js"></script>
 </body>
 </html>
