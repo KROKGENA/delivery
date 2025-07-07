@@ -120,12 +120,6 @@
       alert('Форма и параметры сброшены');
     }
 
-    function calculateDelivery() {
-      if (!window.formData) return alert('Сначала сохраните параметры');
-      console.log('Расчёт по данным:', window.formData);
-      alert('Расчёт стоимости будет здесь...');
-    }
-
     function viewSavedParams() {
       if (!window.formData) return alert('Нет сохранённых параметров');
       alert(JSON.stringify(window.formData, null, 2));
