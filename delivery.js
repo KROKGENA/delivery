@@ -1,3 +1,4 @@
+// === Транспорт ===
 const vehicles = [
   { name: "а/м до 1т", maxWeight: 1000, loadingTypes: ["верхняя", "боковая", "любая"], minTariff: 4000, perKm: 100 },
   { name: "а/м до 1.5т", maxWeight: 1500, loadingTypes: ["верхняя", "боковая", "любая"], minTariff: 4000, perKm: 100 },
@@ -11,11 +12,26 @@ const vehicles = [
   { name: "Манипулятор 15т", maxWeight: 15000, loadingTypes: ["manipulator"], minTariff: 25000, perKm: 240 }
 ];
 
+// === Коэффициенты расстояния ===
+let distanceMultipliers = [
+  { from: 0, to: 50, multiplier: 1 },
+  { from: 50, to: 100, multiplier: 0.9 },
+  { from: 100, to: 200, multiplier: 0.8 },
+  { from: 200, to: 500, multiplier: 0.7 },
+  { from: 500, to: Infinity, multiplier: 0.6 }
+];
+
+function getDistanceMultiplier(km) {
+  for (let range of distanceMultipliers) {
+    if (km >= range.from && km < range.to) return range.multiplier;
+  }
+  return 1;
+}
+
 function selectVehicle(weight, loadingType) {
   return vehicles.find(v => v.maxWeight >= weight && v.loadingTypes.includes(loadingType));
 }
 
-// 📌 Фикс: если "любая", надбавка = 0
 function getLoadingSurcharge(vehicle, loadingType) {
   if (loadingType === "любая") return 0;
   const wt = vehicle.maxWeight;
@@ -111,8 +127,10 @@ function calculateDelivery() {
     }
 
     const extraKm = Math.max(0, data.deliveryDistance - 40);
+    const multiplier = getDistanceMultiplier(data.deliveryDistance);
+    const kmCost = extraKm * vehicle.perKm * multiplier;
     const surcharge = getLoadingSurcharge(vehicle, data.loading_type);
-    deliveryCost = vehicle.minTariff + extraKm * vehicle.perKm + surcharge;
+    deliveryCost = vehicle.minTariff + kmCost + surcharge;
 
     if (data.return_pallets) deliveryCost += 2500;
     if (data.precise_time) deliveryCost += 2500;
@@ -120,7 +138,8 @@ function calculateDelivery() {
     vehicleName = vehicle.name;
     baseLine = `
       <p><strong>Базовый тариф:</strong> ${vehicle.minTariff.toLocaleString()} ₽</p>
-      <p><strong>Доп. км:</strong> ${extraKm.toFixed(2)} км × ${vehicle.perKm} ₽ = ${(extraKm * vehicle.perKm).toLocaleString()} ₽</p>
+      <p><strong>Множитель за расстояние:</strong> × ${multiplier}</p>
+      <p><strong>Доп. км:</strong> ${extraKm.toFixed(2)} км × ${vehicle.perKm} ₽ × ${multiplier} = ${kmCost.toLocaleString()} ₽</p>
       ${surcharge > 0 ? `<p><strong>Надбавка за загрузку (${data.loading_type}):</strong> ${surcharge.toLocaleString()} ₽</p>` : ""}
       ${data.return_pallets ? `<p>Возврат тары: 2 500 ₽</p>` : ""}
       ${data.precise_time ? `<p>Доставка к точному времени: 2 500 ₽</p>` : ""}
@@ -172,7 +191,6 @@ function toggleDetails(e) {
   }
 }
 
-// ⚙️ Админка
 function openAdmin() {
   const pw = prompt("Введите админ-пароль:");
   if (pw !== "admin2024") {
@@ -200,6 +218,26 @@ function openAdmin() {
 
   panel.appendChild(table);
 
+  const multTable = document.createElement("table");
+  multTable.style.borderCollapse = "collapse";
+  multTable.style.marginTop = "20px";
+  multTable.innerHTML = `
+    <tr><th colspan="3" style="text-align:left">💡 Множители за расстояние</th></tr>
+    <tr><th>От (км)</th><th>До (км)</th><th>Множитель</th></tr>
+  `;
+
+  distanceMultipliers.forEach((r, i) => {
+    multTable.innerHTML += `
+      <tr>
+        <td><input type="number" id="from_${i}" value="${r.from}" style="width:60px"></td>
+        <td><input type="number" id="to_${i}" value="${r.to === Infinity ? 99999 : r.to}" style="width:60px"></td>
+        <td><input type="number" step="0.01" id="mult_${i}" value="${r.multiplier}" style="width:60px"></td>
+      </tr>
+    `;
+  });
+
+  panel.appendChild(multTable);
+
   const saveBtn = document.createElement("button");
   saveBtn.textContent = "💾 Сохранить";
   saveBtn.style.marginTop = "10px";
@@ -208,7 +246,17 @@ function openAdmin() {
       v.minTariff = parseInt(document.getElementById(`minTariff_${i}`).value) || v.minTariff;
       v.perKm = parseInt(document.getElementById(`perKm_${i}`).value) || v.perKm;
     });
+
+    distanceMultipliers = distanceMultipliers.map((_, i) => {
+      return {
+        from: parseFloat(document.getElementById(`from_${i}`).value),
+        to: parseFloat(document.getElementById(`to_${i}`).value),
+        multiplier: parseFloat(document.getElementById(`mult_${i}`).value)
+      };
+    });
+
     localStorage.setItem("vehicleTariffs", JSON.stringify(vehicles));
+    localStorage.setItem("distanceMultipliers", JSON.stringify(distanceMultipliers));
     alert("Сохранено!");
   };
 
@@ -216,7 +264,6 @@ function openAdmin() {
   panel.style.display = "block";
 }
 
-// 🚀 Автозагрузка тарифов при старте
 (function loadSavedTariffs() {
   const saved = localStorage.getItem("vehicleTariffs");
   if (saved) {
@@ -232,6 +279,22 @@ function openAdmin() {
       }
     } catch (e) {
       console.warn("Ошибка загрузки тарифов", e);
+    }
+  }
+
+  const savedMult = localStorage.getItem("distanceMultipliers");
+  if (savedMult) {
+    try {
+      const parsedMult = JSON.parse(savedMult);
+      if (Array.isArray(parsedMult)) {
+        distanceMultipliers = parsedMult.map(r => ({
+          from: r.from,
+          to: r.to === 99999 ? Infinity : r.to,
+          multiplier: r.multiplier
+        }));
+      }
+    } catch (e) {
+      console.warn("Ошибка загрузки множителей", e);
     }
   }
 })();
