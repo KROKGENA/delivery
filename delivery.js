@@ -36,12 +36,15 @@ function selectVehicle(weight, loadingType) {
 }
 
 function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
+  const kmStep = 0.1;
   const excessKm = Math.max(0, distance - 40);
   let cost = 0;
-  for (let km = 1; km <= excessKm; km++) {
+
+  for (let km = kmStep; km <= excessKm; km += kmStep) {
     const rate = minRate + (baseRate - minRate) * Math.exp(-decay * km);
-    cost += rate;
+    cost += rate * kmStep;
   }
+
   return Math.round(cost);
 }
 
@@ -146,8 +149,10 @@ async function calculateDelivery() {
 
     const extraKm = Math.max(0, data.deliveryDistance - 40);
     const surcharge = getLoadingSurcharge(vehicle, loadingType);
-    const kmCost = calculateKmCostSmooth(extraKm, vehicle.basePerKm, vehicle.minPerKm, vehicle.decay);
-    deliveryCost = vehicle.minTariff + kmCost + surcharge;
+    const kmCost = calculateKmCostSmooth(data.deliveryDistance, vehicle.basePerKm, vehicle.minPerKm, vehicle.decay);
+    const paidKmCost = calculateKmCostSmooth(extraKm + 40, vehicle.basePerKm, vehicle.minPerKm, vehicle.decay) - calculateKmCostSmooth(40, vehicle.basePerKm, vehicle.minPerKm, vehicle.decay);
+
+    deliveryCost = vehicle.minTariff + paidKmCost + surcharge;
 
     if (data.return_pallets) deliveryCost += 2500;
     if (data.precise_time) deliveryCost += 2500;
@@ -155,7 +160,7 @@ async function calculateDelivery() {
     vehicleName = vehicle.name;
     baseLine = `
       <p><strong>Базовый тариф:</strong> ${vehicle.minTariff.toLocaleString()} ₽</p>
-      <p><strong>Доп. км:</strong> ${extraKm.toFixed(2)} км ≈ ${kmCost.toLocaleString()} ₽</p>
+      <p><strong>Платные км:</strong> ${extraKm.toFixed(2)} км ≈ ${paidKmCost.toLocaleString()} ₽</p>
       ${surcharge > 0 ? `<p><strong>Надбавка за загрузку (${loadingType}):</strong> ${surcharge.toLocaleString()} ₽</p>` : ""}
       ${data.return_pallets ? `<p>Возврат тары: 2 500 ₽</p>` : ""}
       ${data.precise_time ? `<p>Доставка к точному времени: 2 500 ₽</p>` : ""}
