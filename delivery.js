@@ -201,12 +201,12 @@ function toggleDetails(e) {
     return;
   }
 
- // const correctPassword = "2025";
- // const entered = prompt("Введите пароль для просмотра подробностей:");
-//  if (entered === correctPassword) {
- //   block.style.display = "block";
- //   link.textContent = "Скрыть подробности";
-//  } else {
-//    alert("Неверный пароль");
-//  }
-//}
+  const correctPassword = "2025";
+ const entered = prompt("Введите пароль для просмотра подробностей:");
+if (entered === correctPassword) {
+   block.style.display = "block";
+    link.textContent = "Скрыть подробности";
+ } else {
+   alert("Неверный пароль");
+ }
+}
