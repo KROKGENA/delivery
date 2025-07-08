@@ -2,7 +2,7 @@ let vehicles = [];
 
 async function loadTariffs() {
   try {
-    const response = await fetch("data/tariffs.json");
+    const response = await fetch("data/tariffs.json?nocache=" + new Date().getTime());
     const json = await response.json();
     vehicles = json.map((v) => ({
       ...v,
