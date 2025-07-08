@@ -106,7 +106,7 @@
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     L.marker(warehouse).addTo(map).bindPopup("Склад").openPopup();
-    L.circle(warehouse, { radius: 40000, color: 'green', fillOpacity: 0.1 }).addTo(map);
+ //   L.circle(warehouse, { radius: 40000, color: 'green', fillOpacity: 0.1 }).addTo(map);
 
     map.on('click', function(e) {
       const lat = e.latlng.lat;
