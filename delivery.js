@@ -14,13 +14,13 @@ async function loadTariffs() {
   }
 }
 function getMaxWeightFromName(name) {
-  if (name.includes("1т")) return 1000;
-  if (name.includes("1.5т")) return 1500;
-  if (name.includes("3т")) return 3000;
-  if (name.includes("5т")) return 5000;
-  if (name.includes("10т")) return 10000;
-  if (name.includes("15т")) return 15000;
   if (name.includes("20т")) return 20000;
+  if (name.includes("15т")) return 15000;
+  if (name.includes("10т")) return 10000;
+  if (name.includes("5т")) return 5000;
+  if (name.includes("3т")) return 3000;
+  if (name.includes("1.5т")) return 1500;
+  if (name.includes("1т")) return 1000;
   return 0;
 }
 
