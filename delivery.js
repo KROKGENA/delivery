@@ -32,18 +32,19 @@ function getLoadingTypesFromName(name) {
 }
 
 function selectVehicle(weight, loadingType) {
-  return vehicles.find(v => {
-    const fitsLoading = v.loadingTypes.includes(loadingType);
-    const fitsWeight =
-      (v.maxWeight === 1000 && weight <= 1000) ||
-      (v.maxWeight === 1500 && weight <= 1500) ||
-      (v.maxWeight === 3000 && weight <= 3000) ||
-      (v.maxWeight === 5000 && weight <= 5000) ||
-      (v.maxWeight === 10000 && weight <= 10000) ||
-      (v.maxWeight === 15000 && weight <= 15000) ||
-      (v.maxWeight === 20000 && weight <= 20000);
-    return fitsLoading && fitsWeight;
-  });
+  return vehicles
+    .filter(v => v.maxWeight >= weight && v.loadingTypes.includes(loadingType))
+    .sort((a, b) => a.maxWeight - b.maxWeight)
+    .find(v => {
+      if (v.maxWeight === 1000) return weight <= 1000;
+      if (v.maxWeight === 1500) return weight <= 1500;
+      if (v.maxWeight === 3000) return weight <= 3000;
+      if (v.maxWeight === 5000) return weight <= 5000;
+      if (v.maxWeight === 10000) return weight <= 10000;
+      if (v.maxWeight === 15000) return weight <= 15000;
+      if (v.maxWeight === 20000) return weight <= 20000;
+      return false;
+    });
 }
 
 function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
@@ -96,6 +97,8 @@ function getMoversCost(data) {
       total += standard * rate;
     }
   }
+  return total;
+}
   return total;
 }
 
