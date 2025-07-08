@@ -1,17 +1,24 @@
-
 let vehicles = [];
 
 async function loadTariffs() {
   try {
-    const response = await fetch("data/tariffs.json");
+    const response = await fetch("data/tariffs.json?" + Date.now()); // отключаем кеш
     const json = await response.json();
+
+    console.log("✅ Загруженные тарифы:", json); // отладка
+
     vehicles = json.map((v) => ({
       ...v,
       maxWeight: getMaxWeightFromName(v.name),
       loadingTypes: getLoadingTypesFromName(v.name)
     }));
+
+    if (vehicles.length === 0) {
+      alert("Тарифы не загружены или пустые. Проверь файл tariffs.json");
+    }
   } catch (e) {
-    console.error("Не удалось загрузить тарифы:", e);
+    console.error("❌ Не удалось загрузить тарифы:", e);
+    alert("Ошибка загрузки тарифов. Проверь файл tariffs.json");
   }
 }
 
@@ -201,12 +208,6 @@ function toggleDetails(e) {
     return;
   }
 
-  const correctPassword = "2025";
- const entered = prompt("Введите пароль для просмотра подробностей:");
-if (entered === correctPassword) {
-   block.style.display = "block";
-    link.textContent = "Скрыть подробности";
- } else {
-   alert("Неверный пароль");
- }
+  block.style.display = "block";
+  link.textContent = "Скрыть подробности";
 }
