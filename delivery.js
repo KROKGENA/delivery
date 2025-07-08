@@ -99,13 +99,12 @@ function getMoversCost(data) {
   }
   return total;
 }
-  return total;
-}
 
 async function calculateDelivery() {
   if (vehicles.length === 0) {
     await loadTariffs();
   }
+
   if (!window.formData) {
     alert("Сначала сохраните параметры");
     return;
@@ -120,57 +119,29 @@ async function calculateDelivery() {
   let vehicleName = "";
   let baseLine = "";
 
-  if (data.underground && data.height_limit && parseFloat(data.height_limit) < 2.2) {
-    let left = totalWeight;
-    let parts = [];
-    while (left > 0) {
-      if (left > 1500) {
-        parts.push(1500);
-        left -= 1500;
-      } else if (left > 1000) {
-        parts.push(1000);
-        parts.push(left - 1000);
-        break;
-      } else {
-        parts.push(left);
-        break;
-      }
-    }
-
-    parts.forEach(w => {
-      const v = selectVehicle(w, "верхняя");
-      if (!v) return;
-      const dist = data.deliveryDistance;
-      deliveryCost += v.minTariff + calculateKmCostSmooth(dist, v.basePerKm, v.minPerKm, v.decay) + getLoadingSurcharge(v, "верхняя");
-      baseLine += `<p>🚚 ${v.name}: ${v.minTariff.toLocaleString()} ₽</p>`;
-    });
-
-    vehicleName = "Несколько авто (ограничение по высоте)";
-  } else {
-    vehicle = selectVehicle(totalWeight, loadingType);
-    if (!vehicle) {
-      document.getElementById("delivery_result").innerHTML = "<p style='color:red;'>Нет подходящего транспорта</p>";
-      return;
-    }
-
-    const kmCost = calculateKmCostSmooth(data.deliveryDistance, vehicle.basePerKm, vehicle.minPerKm, vehicle.decay);
-    const surcharge = getLoadingSurcharge(vehicle, loadingType);
-    deliveryCost = vehicle.minTariff + kmCost + surcharge;
-
-    if (data.underground) deliveryCost += 1500;
-    if (data.return_pallets) deliveryCost += 2500;
-    if (data.precise_time) deliveryCost += 2500;
-
-    vehicleName = vehicle.name;
-    baseLine = `
-      <p><strong>Стоимость подачи:</strong> ${vehicle.minTariff.toLocaleString()} ₽</p>
-      <p><strong>Расстояние:</strong> ${data.deliveryDistance.toFixed(2)} км ≈ ${kmCost.toLocaleString()} ₽</p>
-      ${surcharge > 0 ? `<p><strong>Надбавка за загрузку (${loadingType}):</strong> ${surcharge.toLocaleString()} ₽</p>` : ""}
-      ${data.underground ? `<p>Подземный паркинг: 1 500 ₽</p>` : ""}
-      ${data.return_pallets ? `<p>Возврат тары: 2 500 ₽</p>` : ""}
-      ${data.precise_time ? `<p>Доставка к точному времени: 2 500 ₽</p>` : ""}
-    `;
+  vehicle = selectVehicle(totalWeight, loadingType);
+  if (!vehicle) {
+    document.getElementById("delivery_result").innerHTML = "<p style='color:red;'>Нет подходящего транспорта</p>";
+    return;
   }
+
+  const kmCost = calculateKmCostSmooth(data.deliveryDistance, vehicle.basePerKm, vehicle.minPerKm, vehicle.decay);
+  const surcharge = getLoadingSurcharge(vehicle, loadingType);
+  deliveryCost = vehicle.minTariff + kmCost + surcharge;
+
+  if (data.return_pallets) deliveryCost += 2500;
+  if (data.precise_time) deliveryCost += 2500;
+  if (data.underground) deliveryCost += 1500;
+
+  vehicleName = vehicle.name;
+  baseLine = `
+    <p><strong>Стоимость подачи:</strong> ${vehicle.minTariff.toLocaleString()} ₽</p>
+    <p><strong>Расстояние:</strong> ${data.deliveryDistance.toFixed(2)} км ≈ ${kmCost.toLocaleString()} ₽</p>
+    ${surcharge > 0 ? `<p><strong>Надбавка за загрузку (${loadingType}):</strong> ${surcharge.toLocaleString()} ₽</p>` : ""}
+    ${data.underground ? `<p>Подземный паркинг: 1 500 ₽</p>` : ""}
+    ${data.return_pallets ? `<p>Возврат тары: 2 500 ₽</p>` : ""}
+    ${data.precise_time ? `<p>Доставка к точному времени: 2 500 ₽</p>` : ""}
+  `;
 
   moversCost = getMoversCost(data);
 
@@ -203,8 +174,8 @@ function toggleDetails(e) {
   if (block.style.display === "block") {
     block.style.display = "none";
     link.textContent = "Показать подробности";
-    return;
+  } else {
+    block.style.display = "block";
+    link.textContent = "Скрыть подробности";
   }
-  block.style.display = "block";
-  link.textContent = "Скрыть подробности";
 }
