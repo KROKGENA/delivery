@@ -68,6 +68,98 @@ function getMoversCost(data) {
   return total;
 }
 
+function calculateDelivery() {
+  if (!window.formData) return alert("Сначала сохраните параметры");
+  const data = window.formData;
+  const totalWeight = (data.weight_standard || 0) + (data.weight_large || 0);
+  let deliveryCost = 0;
+  let moversCost = 0;
+  let vehicleName = "";
+  let baseLine = "";
+
+  if (data.underground && data.height_limit && parseFloat(data.height_limit) < 2.2) {
+    let left = totalWeight;
+    let parts = [];
+    while (left > 0) {
+      if (left > 1500) {
+        parts.push(1500);
+        left -= 1500;
+      } else if (left > 1000) {
+        parts.push(1000);
+        parts.push(left - 1000);
+        break;
+      } else {
+        parts.push(left);
+        break;
+      }
+    }
+    parts.forEach(w => {
+      const v = selectVehicle(w, "верхняя");
+      if (!v) return;
+      const dist = data.deliveryDistance;
+      deliveryCost += v.minTariff + calculateKmCostSmooth(dist, v.basePerKm, v.minPerKm, v.decay) + getLoadingSurcharge(v, data.loading_type);
+      baseLine += `<p>🚚 ${v.name}: ${v.minTariff.toLocaleString()} ₽</p>`;
+    });
+    vehicleName = "Несколько авто (ограничение по высоте)";
+  } else {
+    const vehicle = selectVehicle(totalWeight, data.loading_type);
+    if (!vehicle) {
+      document.getElementById("delivery_result").innerHTML = "<p style='color:red;'>Нет подходящего транспорта</p>";
+      return;
+    }
+    const dist = data.deliveryDistance;
+    const kmCost = calculateKmCostSmooth(dist, vehicle.basePerKm, vehicle.minPerKm, vehicle.decay);
+    const surcharge = getLoadingSurcharge(vehicle, data.loading_type);
+    deliveryCost = vehicle.minTariff + kmCost + surcharge;
+    if (data.return_pallets) deliveryCost += 2500;
+    if (data.precise_time) deliveryCost += 2500;
+    vehicleName = vehicle.name;
+    baseLine = `
+      <p><strong>Базовый тариф:</strong> ${vehicle.minTariff.toLocaleString()} ₽</p>
+      <p><strong>Расстояние:</strong> ${dist.toFixed(2)} км ≈ ${kmCost.toLocaleString()} ₽</p>
+      ${surcharge ? `<p><strong>Надбавка за загрузку (${data.loading_type}):</strong> ${surcharge.toLocaleString()} ₽</p>` : ""}
+      ${data.return_pallets ? `<p>Возврат тары: 2 500 ₽</p>` : ""}
+      ${data.precise_time ? `<p>Доставка к точному времени: 2 500 ₽</p>` : ""}`;
+  }
+
+  moversCost = getMoversCost(data);
+
+  const html = `
+    <p><strong>🚚 Доставка:</strong> ${deliveryCost.toLocaleString()} ₽</p>
+    <p><strong>👷 Грузчики:</strong> ${moversCost.toLocaleString()} ₽</p>
+    <hr><h3>Итого: ${(deliveryCost + moversCost).toLocaleString()} ₽</h3>
+    <p><a href="#" onclick="toggleDetails(event)">Показать подробности</a></p>
+    <div id="details_block" style="display:none;">
+      <h3>🚚 Расчёт стоимости доставки</h3>
+      <p><strong>Транспорт:</strong> ${vehicleName}</p>
+      <p><strong>Общий вес:</strong> ${totalWeight} кг</p>
+      <p><strong>Тип загрузки:</strong> ${data.loading_type}</p>
+      <p><strong>Расстояние:</strong> ${data.deliveryDistance.toFixed(2)} км</p>
+      ${baseLine}
+      ${moversCost > 0 ? `<h3>👷 Грузчики:</h3><p>${moversCost.toLocaleString()} ₽</p>` : ""}
+    </div>`;
+
+  document.getElementById("delivery_result").innerHTML = html;
+  document.getElementById("movers_result").innerHTML = "";
+  document.getElementById("total_result").innerHTML = "";
+}
+
+function toggleDetails(e) {
+  e.preventDefault();
+  const block = document.getElementById("details_block");
+  const link = e.target;
+  if (block.style.display === "block") {
+    block.style.display = "none";
+    link.textContent = "Показать подробности";
+  } else {
+    const entered = prompt("Введите пароль для просмотра подробностей:");
+    if (entered === "2025") {
+      block.style.display = "block";
+      link.textContent = "Скрыть подробности";
+    } else alert("Неверный пароль");
+  }
+}
+
 function loadTariffsFromGitHub() {
   fetch('https://raw.githubusercontent.com/KROKGENA/delivery/main/data/tariffs.json')
     .then(res => res.json())
