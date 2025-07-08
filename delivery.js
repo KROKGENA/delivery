@@ -1,4 +1,3 @@
-// 🚚 Обновлённый список с плавным тарифом
 const vehicles = [
   { name: "а/м до 1т", maxWeight: 1000, loadingTypes: ["верхняя", "боковая", "любая"], minTariff: 4000, basePerKm: 100, minPerKm: 60, decay: 0.015 },
   { name: "а/м до 1.5т", maxWeight: 1500, loadingTypes: ["верхняя", "боковая", "любая"], minTariff: 4000, basePerKm: 100, minPerKm: 60, decay: 0.015 },
@@ -12,48 +11,18 @@ const vehicles = [
   { name: "Манипулятор 15т", maxWeight: 15000, loadingTypes: ["manipulator"], minTariff: 25000, basePerKm: 240, minPerKm: 200, decay: 0.01 }
 ];
 
-function showResult(distance) {
-  const inside = distance <= 40;
-  const outsideKm = inside ? 0 : (distance - 40).toFixed(2);
-  window.deliveryDistance = parseFloat(distance.toFixed(2));
-  window.extraDistance = parseFloat(outsideKm);
-
-  if (window.formData) {
-    window.formData.deliveryDistance = parseFloat(distance.toFixed(2));
-    window.formData.extraDistance = Math.max(0, distance - 40);
-  }
+function selectVehicle(weight, loadingType) {
+  return vehicles.find(v => v.maxWeight >= weight && v.loadingTypes.includes(loadingType));
 }
 
 function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
+  const excessKm = Math.max(0, distance - 40);
   let cost = 0;
-  for (let km = 0.1; km <= distance; km += 0.1) {
+  for (let km = 1; km <= excessKm; km++) {
     const rate = minRate + (baseRate - minRate) * Math.exp(-decay * km);
-    cost += rate * 0.1;
+    cost += rate;
   }
   return Math.round(cost);
-}
-
-function loadTariffsFromGitHub() {
-  fetch("https://raw.githubusercontent.com/KROKGENA/delivery/main/data/tariffs.json")
-    .then(res => res.json())
-    .then(data => {
-      if (Array.isArray(data)) {
-        data.forEach((t, i) => {
-          if (vehicles[i]) {
-            vehicles[i].minTariff = t.minTariff;
-            vehicles[i].basePerKm = t.basePerKm;
-            vehicles[i].minPerKm = t.minPerKm;
-            vehicles[i].decay = t.decay;
-          }
-        });
-        console.log("✅ Тарифы загружены с GitHub");
-      }
-    })
-    .catch(e => console.warn("❌ Ошибка загрузки тарифов", e));
-}
-
-function selectVehicle(weight, loadingType) {
-  return vehicles.find(v => v.maxWeight >= weight && v.loadingTypes.includes(loadingType));
 }
 
 function getLoadingSurcharge(vehicle, loadingType) {
@@ -76,20 +45,25 @@ function getMoversCost(data) {
   const format = data.large_format || "";
 
   let total = 0;
+
   if (large > 0) {
     const liftAllowed = ["100x200", "100x260", "100x280"].includes(format);
-    if (isOnlyUnload) total += large * 20;
-    else if (liftAllowed && hasLift) total += large * 30;
-    else {
+    if (isOnlyUnload) {
+      total += large * 20;
+    } else if (liftAllowed && hasLift) {
+      total += large * 30;
+    } else {
       const rate = floor <= 5 ? 50 : floor <= 10 ? 60 : floor <= 20 ? 70 : 90;
       total += large * rate;
     }
   }
 
   if (standard > 0) {
-    if (isOnlyUnload) total += standard * 7;
-    else if (hasLift) total += standard * 9;
-    else {
+    if (isOnlyUnload) {
+      total += standard * 7;
+    } else if (hasLift) {
+      total += standard * 9;
+    } else {
       const rate = floor <= 5 ? 15 : floor <= 10 ? 20 : floor <= 20 ? 30 : 50;
       total += standard * rate;
     }
@@ -99,54 +73,77 @@ function getMoversCost(data) {
 }
 
 function calculateDelivery() {
-  if (!window.formData) return alert("Сначала сохраните параметры");
+  if (!window.formData) {
+    alert("Сначала сохраните параметры");
+    return;
+  }
 
   const data = window.formData;
   const totalWeight = (data.weight_standard || 0) + (data.weight_large || 0);
-  let deliveryCost = 0, moversCost = 0, vehicleName = "", baseLine = "";
+  let vehicle;
+  let deliveryCost = 0;
+  let moversCost = 0;
+  let vehicleName = "";
+  let baseLine = "";
 
   if (data.underground && data.height_limit && parseFloat(data.height_limit) < 2.2) {
-    let left = totalWeight, parts = [];
+    let left = totalWeight;
+    let parts = [];
     while (left > 0) {
-      if (left > 1500) { parts.push(1500); left -= 1500; }
-      else if (left > 1000) { parts.push(1000); parts.push(left - 1000); break; }
-      else { parts.push(left); break; }
+      if (left > 1500) {
+        parts.push(1500);
+        left -= 1500;
+      } else if (left > 1000) {
+        parts.push(1000);
+        parts.push(left - 1000);
+        break;
+      } else {
+        parts.push(left);
+        break;
+      }
     }
+
     parts.forEach(w => {
       const v = selectVehicle(w, "верхняя");
       if (!v) return;
-      const dist = data.deliveryDistance;
+      const dist = Math.max(0, data.deliveryDistance - 40);
       deliveryCost += v.minTariff + calculateKmCostSmooth(dist, v.basePerKm, v.minPerKm, v.decay) + getLoadingSurcharge(v, data.loading_type);
       baseLine += `<p>🚚 ${v.name}: ${v.minTariff.toLocaleString()} ₽</p>`;
     });
+
     vehicleName = "Несколько авто (ограничение по высоте)";
   } else {
-    const vehicle = selectVehicle(totalWeight, data.loading_type);
+    vehicle = selectVehicle(totalWeight, data.loading_type);
     if (!vehicle) {
       document.getElementById("delivery_result").innerHTML = "<p style='color:red;'>Нет подходящего транспорта</p>";
       return;
     }
-    const dist = data.deliveryDistance;
-    const kmCost = calculateKmCostSmooth(dist, vehicle.basePerKm, vehicle.minPerKm, vehicle.decay);
+
+    const extraKm = Math.max(0, data.deliveryDistance - 40);
     const surcharge = getLoadingSurcharge(vehicle, data.loading_type);
+    const kmCost = calculateKmCostSmooth(extraKm, vehicle.basePerKm, vehicle.minPerKm, vehicle.decay);
     deliveryCost = vehicle.minTariff + kmCost + surcharge;
+
     if (data.return_pallets) deliveryCost += 2500;
     if (data.precise_time) deliveryCost += 2500;
+
     vehicleName = vehicle.name;
     baseLine = `
       <p><strong>Базовый тариф:</strong> ${vehicle.minTariff.toLocaleString()} ₽</p>
-      <p><strong>Доп. км:</strong> ${dist.toFixed(2)} км ≈ ${kmCost.toLocaleString()} ₽</p>
-      ${surcharge ? `<p><strong>Надбавка за загрузку (${data.loading_type}):</strong> ${surcharge.toLocaleString()} ₽</p>` : ""}
+      <p><strong>Доп. км:</strong> ${extraKm.toFixed(2)} км ≈ ${kmCost.toLocaleString()} ₽</p>
+      ${surcharge > 0 ? `<p><strong>Надбавка за загрузку (${data.loading_type}):</strong> ${surcharge.toLocaleString()} ₽</p>` : ""}
       ${data.return_pallets ? `<p>Возврат тары: 2 500 ₽</p>` : ""}
-      ${data.precise_time ? `<p>Доставка к точному времени: 2 500 ₽</p>` : ""}`;
+      ${data.precise_time ? `<p>Доставка к точному времени: 2 500 ₽</p>` : ""}
+    `;
   }
 
   moversCost = getMoversCost(data);
 
-  const html = `
+  const compactHtml = `
     <p><strong>🚚 Доставка:</strong> ${deliveryCost.toLocaleString()} ₽</p>
     <p><strong>👷 Грузчики:</strong> ${moversCost.toLocaleString()} ₽</p>
-    <hr><h3>Итого: ${(deliveryCost + moversCost).toLocaleString()} ₽</h3>
+    <hr>
+    <h3>Итого: ${(deliveryCost + moversCost).toLocaleString()} ₽</h3>
     <p><a href="#" onclick="toggleDetails(event)">Показать подробности</a></p>
     <div id="details_block" style="display:none;">
       <h3>🚚 Расчёт стоимости доставки</h3>
@@ -156,9 +153,10 @@ function calculateDelivery() {
       <p><strong>Расстояние:</strong> ${data.deliveryDistance.toFixed(2)} км</p>
       ${baseLine}
       ${moversCost > 0 ? `<h3>👷 Грузчики:</h3><p>${moversCost.toLocaleString()} ₽</p>` : ""}
-    </div>`;
+    </div>
+  `;
 
-  document.getElementById("delivery_result").innerHTML = html;
+  document.getElementById("delivery_result").innerHTML = compactHtml;
   document.getElementById("movers_result").innerHTML = "";
   document.getElementById("total_result").innerHTML = "";
 }
@@ -167,17 +165,93 @@ function toggleDetails(e) {
   e.preventDefault();
   const block = document.getElementById("details_block");
   const link = e.target;
+
   if (block.style.display === "block") {
     block.style.display = "none";
     link.textContent = "Показать подробности";
+    return;
+  }
+
+  const correctPassword = "2025";
+  const entered = prompt("Введите пароль для просмотра подробностей:");
+  if (entered === correctPassword) {
+    block.style.display = "block";
+    link.textContent = "Скрыть подробности";
   } else {
-    const entered = prompt("Введите пароль для просмотра подробностей:");
-    if (entered === "2025") {
-      block.style.display = "block";
-      link.textContent = "Скрыть подробности";
-    } else alert("Неверный пароль");
+    alert("Неверный пароль");
   }
 }
 
-// Запускаем загрузку с GitHub при старте
-loadTariffsFromGitHub();
+function openAdmin() {
+  const pw = prompt("Введите админ-пароль:");
+  if (pw !== "2025") {
+    alert("Неверный пароль");
+    return;
+  }
+
+  const panel = document.getElementById("admin_panel");
+  panel.innerHTML = "<h3>⚙️ Редактирование тарифов</h3>";
+  const table = document.createElement("table");
+  table.style.borderCollapse = "collapse";
+  table.innerHTML = `
+    <tr>
+      <th>Транспорт</th>
+      <th>Базовый тариф (₽)</th>
+      <th>₽/км начальный</th>
+      <th>₽/км минимальный</th>
+      <th>Скорость убывания (decay)</th>
+    </tr>
+  `;
+
+  vehicles.forEach((v, i) => {
+    table.innerHTML += `
+      <tr>
+        <td>${v.name}</td>
+        <td><input type="number" id="minTariff_${i}" value="${v.minTariff}" style="width:80px"></td>
+        <td><input type="number" id="basePerKm_${i}" value="${v.basePerKm}" style="width:80px"></td>
+        <td><input type="number" id="minPerKm_${i}" value="${v.minPerKm}" style="width:80px"></td>
+        <td><input type="number" step="0.001" id="decay_${i}" value="${v.decay}" style="width:80px"></td>
+      </tr>
+    `;
+  });
+
+  panel.appendChild(table);
+
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "💾 Сохранить";
+  saveBtn.style.marginTop = "10px";
+  saveBtn.onclick = () => {
+    vehicles.forEach((v, i) => {
+      v.minTariff = parseInt(document.getElementById(`minTariff_${i}`).value) || v.minTariff;
+      v.basePerKm = parseFloat(document.getElementById(`basePerKm_${i}`).value) || v.basePerKm;
+      v.minPerKm = parseFloat(document.getElementById(`minPerKm_${i}`).value) || v.minPerKm;
+      v.decay = parseFloat(document.getElementById(`decay_${i}`).value) || v.decay;
+    });
+    localStorage.setItem("vehicleTariffs", JSON.stringify(vehicles));
+    alert("Сохранено!");
+  };
+
+  panel.appendChild(saveBtn);
+  panel.style.display = "block";
+}
+
+(function loadSavedTariffs() {
+  const saved = localStorage.getItem("vehicleTariffs");
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        parsed.forEach((v, i) => {
+          if (vehicles[i]) {
+            vehicles[i].minTariff = v.minTariff;
+            vehicles[i].basePerKm = v.basePerKm;
+            vehicles[i].minPerKm = v.minPerKm;
+            vehicles[i].decay = v.decay;
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("Ошибка загрузки тарифов", e);
+    }
+  }
+})();
