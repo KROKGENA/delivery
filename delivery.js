@@ -2,23 +2,16 @@ let vehicles = [];
 
 async function loadTariffs() {
   try {
-    const response = await fetch("data/tariffs.json?" + Date.now()); // отключаем кеш
+    const response = await fetch("data/tariffs.json");
     const json = await response.json();
-
-    console.log("✅ Загруженные тарифы:", json); // отладка
-
     vehicles = json.map((v) => ({
       ...v,
       maxWeight: getMaxWeightFromName(v.name),
       loadingTypes: getLoadingTypesFromName(v.name)
     }));
-
-    if (vehicles.length === 0) {
-      alert("Тарифы не загружены или пустые. Проверь файл tariffs.json");
-    }
+    console.log("Загружены тарифы:", vehicles);
   } catch (e) {
-    console.error("❌ Не удалось загрузить тарифы:", e);
-    alert("Ошибка загрузки тарифов. Проверь файл tariffs.json");
+    console.error("Не удалось загрузить тарифы:", e);
   }
 }
 
@@ -41,9 +34,8 @@ function getLoadingTypesFromName(name) {
 
 function selectVehicle(weight, loadingType) {
   return vehicles
-  .filter(v => v.maxWeight >= weight && v.loadingTypes.includes(loadingType))
-  .sort((a, b) => a.maxWeight - b.maxWeight)[0];
-
+    .filter(v => v.maxWeight >= weight && v.loadingTypes.includes(loadingType))
+    .sort((a, b) => a.maxWeight - b.maxWeight)[0];
 }
 
 function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
@@ -145,8 +137,10 @@ async function calculateDelivery() {
       const v = selectVehicle(w, "верхняя");
       if (!v) return;
       const dist = data.deliveryDistance;
-      deliveryCost += v.minTariff + calculateKmCostSmooth(dist, v.basePerKm, v.minPerKm, v.decay) + getLoadingSurcharge(v, "верхняя");
-      baseLine += `<p>🚚 ${v.name}: ${v.minTariff.toLocaleString()} ₽</p>`;
+      const kmCost = calculateKmCostSmooth(dist, v.basePerKm, v.minPerKm, v.decay);
+      const surcharge = getLoadingSurcharge(v, "верхняя");
+      deliveryCost += v.minTariff + kmCost + surcharge;
+      baseLine += `<p>🚚 ${v.name} (${w} кг): ${v.minTariff.toLocaleString()} ₽ + ${kmCost} ₽ + ${surcharge} ₽</p>`;
     });
 
     vehicleName = "Несколько авто (ограничение по высоте)";
