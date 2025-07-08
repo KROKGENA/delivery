@@ -129,7 +129,7 @@ async function calculateDelivery() {
 
   vehicleName = vehicle.name;
   baseLine = `
-    <p><strong>Базовый тариф (до 40 км):</strong> ${vehicle.minTariff.toLocaleString()} ₽</p>
+    <p><strong>Стоимость подачи:</strong> ${vehicle.minTariff.toLocaleString()} ₽</p>
     <p><strong>Расстояние:</strong> ${data.deliveryDistance.toFixed(2)} км ≈ ${kmCost.toLocaleString()} ₽</p>
     ${surcharge > 0 ? `<p><strong>Надбавка за загрузку (${loadingType}):</strong> ${surcharge.toLocaleString()} ₽</p>` : ""}
     ${data.return_pallets ? `<p>Возврат тары: 2 500 ₽</p>` : ""}
