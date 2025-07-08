@@ -16,7 +16,6 @@
   </label>
 
   <form id="deliveryForm">
-    <!-- форма: параметры доставки -->
     <fieldset>
       <legend>Параметры доставки</legend>
 
@@ -88,19 +87,137 @@
     <button type="button" onclick="viewSavedParams()">Посмотреть параметры</button>
   </form>
 
-  <button onclick="openAdmin()">⚙️ Админка</button>
-  <div id="admin_panel" style="display:none; margin-top:20px;"></div>
-
+  <!-- Вывод расчётов -->
   <div id="delivery_result" style="margin-top: 20px;"></div>
   <div id="movers_result"></div>
   <div id="total_result" style="font-weight: bold; margin-top: 10px;"></div>
 
   <div id="map" style="height: 400px; margin-top:20px;"></div>
 
+  <!-- Leaflet -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.min.js"></script>
 
-  <!-- Основной JS-файл -->
+  <!-- Логика карты и формы -->
+  <script>
+    const warehouse = [54.907129, 38.054109];
+    const map = L.map('map').setView(warehouse, 10);
+    let clientMarker, routeControl;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    L.marker(warehouse).addTo(map).bindPopup("Склад").openPopup();
+    L.circle(warehouse, { radius: 40000, color: 'green', fillOpacity: 0.1 }).addTo(map);
+
+    map.on('click', function(e) {
+      const lat = e.latlng.lat;
+      const lon = e.latlng.lng;
+      if (clientMarker) map.removeLayer(clientMarker);
+      clientMarker = L.marker([lat, lon]).addTo(map).bindPopup("Клиент").openPopup();
+      reverseGeocode(lat, lon);
+      drawRoute(lat, lon);
+      const distance = calculateDistance(warehouse[0], warehouse[1], lat, lon);
+      showResult(distance);
+    });
+
+    function geocodeAddress() {
+      const query = document.getElementById('address').value;
+      if (!query) return;
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            if (clientMarker) map.removeLayer(clientMarker);
+            clientMarker = L.marker([lat, lon]).addTo(map).bindPopup("Клиент").openPopup();
+            map.setView([lat, lon], 12);
+            drawRoute(lat, lon);
+            const distance = calculateDistance(warehouse[0], warehouse[1], lat, lon);
+            showResult(distance);
+          } else {
+            alert('Адрес не найден');
+          }
+        });
+    }
+
+    function drawRoute(destLat, destLon) {
+      if (routeControl) map.removeControl(routeControl);
+      routeControl = L.Routing.control({
+        waypoints: [L.latLng(warehouse[0], warehouse[1]), L.latLng(destLat, destLon)],
+        routeWhileDragging: false,
+        draggableWaypoints: false,
+        addWaypoints: false,
+        createMarker: () => null
+      }).addTo(map);
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) *
+                Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function reverseGeocode(lat, lon) {
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.display_name) {
+            document.getElementById('address').value = data.display_name;
+          }
+        });
+    }
+
+    function showResult(distance) {
+      const inside = distance <= 40;
+      const outsideKm = inside ? 0 : (distance - 40).toFixed(2);
+      window.deliveryDistance = parseFloat(distance.toFixed(2));
+      window.extraDistance = parseFloat(outsideKm);
+    }
+
+    function saveFormData() {
+      window.formData = {
+        weight_standard: +document.getElementById('weight_standard').value || 0,
+        weight_large: +document.getElementById('weight_large').value || 0,
+        large_format: document.getElementById('large_format').value,
+        loading_type: document.getElementById('loading_type').value,
+        return_pallets: document.getElementById('return_pallets').checked,
+        underground: document.getElementById('underground').checked,
+        height_limit: document.getElementById('height_limit').value || null,
+        precise_time: document.getElementById('precise_time').checked,
+        delivery_time: document.getElementById('precise_time').checked ? document.getElementById('delivery_time').value : null,
+        need_movers: document.getElementById('need_movers').checked,
+        floor: document.getElementById('floor').value || null,
+        only_unload: document.querySelector('input[name="only_unload"]:checked')?.value,
+        lift: document.querySelector('input[name="lift"]:checked')?.value,
+        deliveryDistance: window.deliveryDistance,
+        extraDistance: window.extraDistance
+      };
+      alert('Параметры сохранены');
+    }
+
+    function clearFormData() {
+      window.formData = {};
+      document.getElementById('deliveryForm').reset();
+      document.getElementById('large_format_block').style.display = 'none';
+      document.getElementById('height_block').style.display = 'none';
+      document.getElementById('movers_block').style.display = 'none';
+      document.getElementById('time_block').style.display = 'none';
+      document.getElementById("delivery_result").innerHTML = '';
+      document.getElementById("movers_result").innerHTML = '';
+      document.getElementById("total_result").innerHTML = '';
+    }
+
+    function viewSavedParams() {
+      if (!window.formData) return alert('Нет сохранённых параметров');
+      alert(JSON.stringify(window.formData, null, 2));
+    }
+  </script>
+
+  <!-- Delivery logic -->
   <script src="delivery.js"></script>
 </body>
 </html>
