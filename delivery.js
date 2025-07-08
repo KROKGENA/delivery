@@ -1,15 +1,34 @@
-const vehicles = [
-  { name: "а/м до 1т", maxWeight: 1000, loadingTypes: ["верхняя", "боковая", "любая"], minTariff: 4000, basePerKm: 100, minPerKm: 60, decay: 0.015 },
-  { name: "а/м до 1.5т", maxWeight: 1500, loadingTypes: ["верхняя", "боковая", "любая"], minTariff: 4000, basePerKm: 100, minPerKm: 60, decay: 0.015 },
-  { name: "а/м до 3т", maxWeight: 3000, loadingTypes: ["верхняя", "боковая", "любая"], minTariff: 4500, basePerKm: 115, minPerKm: 70, decay: 0.012 },
-  { name: "а/м 5т", maxWeight: 5000, loadingTypes: ["верхняя", "боковая", "любая"], minTariff: 5000, basePerKm: 144, minPerKm: 90, decay: 0.012 },
-  { name: "а/м 5т гидролифт", maxWeight: 5000, loadingTypes: ["гидролифт"], minTariff: 6000, basePerKm: 154, minPerKm: 100, decay: 0.012 },
-  { name: "а/м 10т", maxWeight: 10000, loadingTypes: ["верхняя", "боковая", "любая"], minTariff: 8000, basePerKm: 210, minPerKm: 130, decay: 0.01 },
-  { name: "Еврофура 20т", maxWeight: 20000, loadingTypes: ["верхняя", "боковая", "любая"], minTariff: 10000, basePerKm: 250, minPerKm: 160, decay: 0.01 },
-  { name: "Манипулятор 5т", maxWeight: 5000, loadingTypes: ["manipulator"], minTariff: 15000, basePerKm: 240, minPerKm: 200, decay: 0.01 },
-  { name: "Манипулятор 10т", maxWeight: 10000, loadingTypes: ["manipulator"], minTariff: 20000, basePerKm: 240, minPerKm: 200, decay: 0.01 },
-  { name: "Манипулятор 15т", maxWeight: 15000, loadingTypes: ["manipulator"], minTariff: 25000, basePerKm: 240, minPerKm: 200, decay: 0.01 }
-];
+let vehicles = [];
+
+async function loadTariffs() {
+  try {
+    const response = await fetch("data/tariffs.json");
+    const json = await response.json();
+    vehicles = json.map((v) => ({
+      ...v,
+      maxWeight: getMaxWeightFromName(v.name),
+      loadingTypes: getLoadingTypesFromName(v.name)
+    }));
+  } catch (e) {
+    console.error("Не удалось загрузить тарифы:", e);
+  }
+}
+function getMaxWeightFromName(name) {
+  if (name.includes("1т")) return 1000;
+  if (name.includes("1.5т")) return 1500;
+  if (name.includes("3т")) return 3000;
+  if (name.includes("5т")) return 5000;
+  if (name.includes("10т")) return 10000;
+  if (name.includes("15т")) return 15000;
+  if (name.includes("20т")) return 20000;
+  return 0;
+}
+
+function getLoadingTypesFromName(name) {
+  if (name.includes("гидролифт")) return ["гидролифт"];
+  if (name.includes("Манипулятор")) return ["manipulator"];
+  return ["верхняя", "боковая", "любая"];
+}
 
 function selectVehicle(weight, loadingType) {
   return vehicles.find(v => v.maxWeight >= weight && v.loadingTypes.includes(loadingType));
@@ -70,6 +89,13 @@ function getMoversCost(data) {
   }
 
   return total;
+}
+async function calculateDelivery() {
+  if (vehicles.length === 0) {
+    await loadTariffs(); // Ждём загрузку, если ещё не загружено
+  }
+
+  // ...дальше как есть
 }
 
 function calculateDelivery() {
