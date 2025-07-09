@@ -30,12 +30,10 @@ function getLoadingTypesFromName(name) {
   if (name.includes("Манипулятор")) return ["manipulator"];
   return ["верхняя", "боковая", "любая"];
 }
-
 function selectVehicle(weight, loadingType) {
   return vehicles
-    .filter(v => v.maxWeight >= weight && v.loadingTypes.includes(loadingType))
-    .sort((a, b) => a.maxWeight - b.maxWeight)
-    .find(v => weight <= v.maxWeight);
+    .filter(v => weight <= v.maxWeight && v.loadingTypes.includes(loadingType))
+    .sort((a, b) => a.maxWeight - b.maxWeight)[0];
 }
 
 function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
