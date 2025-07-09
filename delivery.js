@@ -26,14 +26,24 @@ function getMaxWeightFromName(name) {
 }
 
 function getLoadingTypesFromName(name) {
-  if (name.includes("гидролифт")) return ["гидролифт"];
-  if (name.includes("Манипулятор")) return ["manipulator"];
+  if (name.toLowerCase().includes("гидролифт")) return ["гидролифт"];
+  if (name.toLowerCase().includes("манипулятор")) return ["manipulator"];
   return ["верхняя", "боковая", "любая"];
 }
+
 function selectVehicle(weight, loadingType) {
-  return vehicles
-    .filter(v => weight <= v.maxWeight && v.loadingTypes.includes(loadingType))
-    .sort((a, b) => a.maxWeight - b.maxWeight)[0];
+  const suitableByWeight = vehicles.filter(v => v.maxWeight >= weight);
+
+  if (suitableByWeight.length === 0) {
+    console.warn("Нет машин, способных перевезти вес:", weight);
+    return null;
+  }
+
+  const exactMatch = suitableByWeight.find(v => v.loadingTypes.includes(loadingType));
+  if (exactMatch) return exactMatch;
+
+  console.warn("Нет точного совпадения по загрузке. Выбран транспорт без совпадения по типу.");
+  return suitableByWeight[0];
 }
 
 function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
@@ -47,8 +57,8 @@ function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
 }
 
 function getLoadingSurcharge(vehicle, loadingType) {
-  if (loadingType === "любая") return 0;
   const wt = vehicle.maxWeight;
+  if (loadingType === "любая") return 0;
   if (wt <= 3000) return 1500;
   if (wt === 5000) return loadingType === "боковая" ? 2000 : 2500;
   if (wt === 10000) return loadingType === "боковая" ? 2500 : 3000;
@@ -58,6 +68,7 @@ function getLoadingSurcharge(vehicle, loadingType) {
 
 function getMoversCost(data) {
   if (!data.need_movers) return 0;
+
   const floor = parseInt(data.floor || 1);
   const hasLift = data.lift === "true";
   const isOnlyUnload = data.only_unload === "true";
@@ -65,6 +76,7 @@ function getMoversCost(data) {
   const large = data.weight_large || 0;
   const format = data.large_format || "";
   let total = 0;
+
   if (large > 0) {
     const liftAllowed = ["100x200", "100x260", "100x280"].includes(format);
     if (isOnlyUnload) {
@@ -76,6 +88,7 @@ function getMoversCost(data) {
       total += large * rate;
     }
   }
+
   if (standard > 0) {
     if (isOnlyUnload) {
       total += standard * 7;
@@ -86,6 +99,7 @@ function getMoversCost(data) {
       total += standard * rate;
     }
   }
+
   return total;
 }
 
@@ -107,9 +121,12 @@ async function calculateDelivery() {
   let vehicleName = "";
   let baseLine = "";
 
+  console.log("🚛 Выбор авто для веса:", totalWeight, "Тип загрузки:", loadingType);
+
   if (data.underground && parseFloat(data.height_limit) < 2.2) {
     let left = totalWeight;
     const parts = [];
+
     while (left > 0) {
       if (left > 1500) {
         parts.push(1500);
@@ -130,7 +147,7 @@ async function calculateDelivery() {
       baseLine += `<p>🚚 ${v.name} (${weight} кг): ${v.minTariff.toLocaleString()} ₽ + ${kmCost.toLocaleString()} ₽ + ${surcharge.toLocaleString()} ₽</p>`;
     });
 
-    deliveryCost += 1500; // Паркинг
+    deliveryCost += 1500; // Доплата за паркинг
     vehicleName = "Несколько авто (ограничение по высоте)";
   } else {
     const vehicle = selectVehicle(totalWeight, loadingType);
@@ -138,6 +155,7 @@ async function calculateDelivery() {
       document.getElementById("delivery_result").innerHTML = "<p style='color:red;'>Нет подходящего транспорта</p>";
       return;
     }
+
     const kmCost = calculateKmCostSmooth(data.deliveryDistance, vehicle.basePerKm, vehicle.minPerKm, vehicle.decay);
     const surcharge = getLoadingSurcharge(vehicle, loadingType);
     deliveryCost = vehicle.minTariff + kmCost + surcharge;
