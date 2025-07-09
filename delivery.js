@@ -1,14 +1,30 @@
 let vehicles = [];
-
 async function loadTariffs(forceReloadFromGit = false) {
   try {
+    const basePath = location.pathname.includes("/delivery/") ? "/delivery/" : "/";
     const saved = localStorage.getItem("custom_tariffs");
+
     if (saved && !forceReloadFromGit) {
       vehicles = JSON.parse(saved);
+      console.log("✅ Загружено из localStorage");
     } else {
-      const response = await fetch("data/tariffs.json?nocache=" + new Date().getTime());
+      const response = await fetch(`${basePath}data/tariffs.json?nocache=${Date.now()}`);
       const json = await response.json();
       vehicles = json;
+      localStorage.setItem("custom_tariffs", JSON.stringify(json));
+      console.log("✅ Загружено с GitHub");
+    }
+
+    vehicles = vehicles.map((v) => ({
+      ...v,
+      maxWeight: getMaxWeightFromName(v.name),
+      loadingTypes: getLoadingTypesFromName(v.name)
+    })).sort((a, b) => a.maxWeight - b.maxWeight);
+
+  } catch (e) {
+    console.error("❌ Не удалось загрузить тарифы:", e);
+    alert("Ошибка загрузки тарифов: " + e.message);
+  }
 
       // Сохраняем свежие с Git — для сброса локальных
       localStorage.setItem("custom_tariffs", JSON.stringify(json));
