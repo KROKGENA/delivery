@@ -1,14 +1,25 @@
 let vehicles = [];
 
-async function loadTariffs() {
+async function loadTariffs(forceReloadFromGit = false) {
   try {
-    const response = await fetch("data/tariffs.json?nocache=" + new Date().getTime());
-    const json = await response.json();
-    vehicles = json.map((v) => ({
+    const saved = localStorage.getItem("custom_tariffs");
+    if (saved && !forceReloadFromGit) {
+      vehicles = JSON.parse(saved);
+    } else {
+      const response = await fetch("data/tariffs.json?nocache=" + new Date().getTime());
+      const json = await response.json();
+      vehicles = json;
+
+      // Сохраняем свежие с Git — для сброса локальных
+      localStorage.setItem("custom_tariffs", JSON.stringify(json));
+    }
+
+    vehicles = vehicles.map((v) => ({
       ...v,
       maxWeight: getMaxWeightFromName(v.name),
       loadingTypes: getLoadingTypesFromName(v.name)
     })).sort((a, b) => a.maxWeight - b.maxWeight);
+
   } catch (e) {
     console.error("Не удалось загрузить тарифы:", e);
   }
@@ -33,7 +44,6 @@ function getLoadingTypesFromName(name) {
 
 function selectVehicle(weight, loadingType) {
   const suitableByWeight = vehicles.filter(v => v.maxWeight >= weight);
-
   if (suitableByWeight.length === 0) {
     console.warn("Нет машин, способных перевезти вес:", weight);
     return null;
@@ -120,8 +130,6 @@ async function calculateDelivery() {
   let moversCost = 0;
   let vehicleName = "";
   let baseLine = "";
-
-  console.log("🚛 Выбор авто для веса:", totalWeight, "Тип загрузки:", loadingType);
 
   if (data.underground && parseFloat(data.height_limit) < 2.2) {
     let left = totalWeight;
@@ -210,4 +218,75 @@ function toggleDetails(e) {
     block.style.display = "block";
     link.textContent = "Скрыть подробности";
   }
+}
+
+// --- АДМИНКА ---
+
+function openAdminPanel() {
+  if (vehicles.length === 0) {
+    alert("Сначала загрузите тарифы");
+    return;
+  }
+
+  const wrapper = document.createElement("div");
+  wrapper.style = "position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:9999;padding:20px;overflow:auto;font-family:sans-serif;";
+  wrapper.id = "admin_panel";
+
+  const html = `
+    <h2>⚙️ Админка тарифов</h2>
+    <p>Измените параметры и нажмите "Сохранить"</p>
+    <table border="1" cellpadding="8" style="border-collapse:collapse;width:100%;max-width:900px">
+      <thead>
+        <tr>
+          <th>Машина</th>
+          <th>Мин. тариф (₽)</th>
+          <th>₽/км начальный</th>
+          <th>₽/км минимальный</th>
+          <th>Коэфф. уменьшения</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${vehicles.map((v, i) => `
+          <tr>
+            <td>${v.name}</td>
+            <td><input type="number" value="${v.minTariff}" id="minTariff_${i}" style="width:100px"></td>
+            <td><input type="number" value="${v.basePerKm}" id="basePerKm_${i}" style="width:100px"></td>
+            <td><input type="number" value="${v.minPerKm}" id="minPerKm_${i}" style="width:100px"></td>
+            <td><input type="number" step="0.001" value="${v.decay}" id="decay_${i}" style="width:100px"></td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+    <br>
+    <button onclick="saveAdminTariffs()">💾 Сохранить</button>
+    <button onclick="loadFromGit()">🔄 Загрузить с Git</button>
+    <button onclick="closeAdminPanel()">❌ Закрыть</button>
+  `;
+
+  wrapper.innerHTML = html;
+  document.body.appendChild(wrapper);
+}
+
+function closeAdminPanel() {
+  const panel = document.getElementById("admin_panel");
+  if (panel) panel.remove();
+}
+
+function saveAdminTariffs() {
+  vehicles.forEach((v, i) => {
+    v.minTariff = parseInt(document.getElementById(`minTariff_${i}`).value);
+    v.basePerKm = parseFloat(document.getElementById(`basePerKm_${i}`).value);
+    v.minPerKm = parseFloat(document.getElementById(`minPerKm_${i}`).value);
+    v.decay = parseFloat(document.getElementById(`decay_${i}`).value);
+  });
+
+  localStorage.setItem("custom_tariffs", JSON.stringify(vehicles));
+  alert("Тарифы обновлены! Используются новые значения.");
+  closeAdminPanel();
+}
+
+async function loadFromGit() {
+  await loadTariffs(true);
+  alert("Тарифы загружены с Git. Локальные замены сброшены.");
+  closeAdminPanel();
 }
