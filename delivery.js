@@ -31,25 +31,39 @@ async function loadTariffs(forceReloadFromGit = false) {
 function getMaxWeightFromName(name) {
   const lowered = name.toLowerCase();
 
-  if (/манипулятор 15т/.test(lowered)) return 15000;
-  if (/манипулятор 10т/.test(lowered)) return 10000;
-  if (/манипулятор 5т/.test(lowered)) return 5000;
-  if (/еврофура/.test(lowered)) return 20000;
-  if (/\b20т\b/.test(lowered)) return 20000;
-  if (/\b15т\b/.test(lowered)) return 15000;
-  if (/\b10т\b/.test(lowered)) return 10000;
-  if (/\b5т\b/.test(lowered)) return 5000;
-  if (/\b3т\b/.test(lowered)) return 3000;
-  if (/\b1\.5т\b/.test(lowered)) return 1500;
-  if (/\b1т\b/.test(lowered)) return 1000;
+  const patterns = new Map([
+    [/манипулятор 15т/, 15000],
+    [/манипулятор 10т/, 10000],
+    [/манипулятор 5т/, 5000],
+    [/еврофура/, 20000],
+    [/\b20т\b/, 20000],
+    [/\b15т\b/, 15000],
+    [/\b10т\b/, 10000],
+    [/\b5т\b/, 5000],
+    [/\b3т\b/, 3000],
+    [/\b1\.5т\b/, 1500],
+    [/\b1т\b/, 1000]
+  ]);
+
+  for (const [regex, weight] of patterns) {
+    if (regex.test(lowered)) return weight;
+  }
 
   return 0;
 }
 
 function getLoadingTypesFromName(name) {
   const lowered = name.toLowerCase();
-  if (lowered.includes("гидролифт")) return ["гидролифт"];
-  if (lowered.includes("манипулятор")) return ["manipulator"];
+
+  const loadingMap = new Map([
+    [/гидролифт/, ["гидролифт"]],
+    [/манипулятор/, ["manipulator"]]
+  ]);
+
+  for (const [regex, types] of loadingMap) {
+    if (regex.test(lowered)) return types;
+  }
+
   return ["верхняя", "боковая", "любая"];
 }
 
