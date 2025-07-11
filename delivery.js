@@ -73,10 +73,8 @@ function selectVehicle(weight, loadingType) {
     { name: "а/м до 1т",       types: ["любая", "верхняя", "боковая"], min: 0,    max: 1000 },
   ];
 
-  for (let i = 0; i < vehiclePriority.length; i++) {
-    const rule = vehiclePriority[i];
-    const fitsWeight =
-      i === 0 ? weight <= rule.max : weight > vehiclePriority[i - 1].max && weight <= rule.max;
+  for (const rule of vehiclePriority) {
+    const fitsWeight = weight >= rule.min && weight <= rule.max;
     const fitsLoading = rule.types.includes(normalizedType);
 
     console.log(`  🔍 Пробуем: ${rule.name} | Диапазон: ${rule.min}-${rule.max} | Подходит по весу: ${fitsWeight} | по загрузке: ${fitsLoading}`);
@@ -91,6 +89,7 @@ function selectVehicle(weight, loadingType) {
   console.warn("❌ Нет подходящего авто");
   return null;
 }
+
 
 function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
   const kmStep = 0.1;
