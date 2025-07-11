@@ -56,27 +56,27 @@ function getLoadingTypesFromName(name) {
 }
 
 function selectVehicle(weight, loadingType) {
-  const normalizedType = (loadingType || "").toLowerCase();
+  const normalizedType = (loadingType || "любая").toLowerCase();
 
-  // Чётко заданы правила подбора
   const vehiclePriority = [
     { name: "Манипулятор 15т", types: ["manipulator"], min: 10001, max: 15000 },
     { name: "Манипулятор 10т", types: ["manipulator"], min: 5001, max: 10000 },
-    { name: "Манипулятор 5т",  types: ["manipulator"], min: 0,    max: 5000   },
-    { name: "а/м 5т гидролифт", types: ["гидролифт"],    min: 0,    max: 5000   },
-    { name: "Еврофура 20т",    types: ["верхняя", "боковая", "любая"], min: 10001, max: 20000 },
-    { name: "а/м 10т",         types: ["верхняя", "боковая", "любая"], min: 5001, max: 10000 },
-    { name: "а/м 5т",          types: ["верхняя", "боковая", "любая"], min: 3001, max: 5000 },
-    { name: "а/м до 3т",       types: ["верхняя", "боковая", "любая"], min: 1501, max: 3000 },
-    { name: "а/м до 1.5т",     types: ["верхняя", "боковая", "любая"], min: 1001, max: 1500 },
-    { name: "а/м до 1т",       types: ["верхняя", "боковая", "любая"], min: 0,    max: 1000 },
+    { name: "Манипулятор 5т",  types: ["manipulator"], min: 0,    max: 5000 },
+    { name: "а/м 5т гидролифт", types: ["гидролифт"],    min: 0,    max: 5000 },
+    { name: "Еврофура 20т",    types: ["любая", "верхняя", "боковая"], min: 10001, max: 20000 },
+    { name: "а/м 10т",         types: ["любая", "верхняя", "боковая"], min: 5001, max: 10000 },
+    { name: "а/м 5т",          types: ["любая", "верхняя", "боковая"], min: 3001, max: 5000 },
+    { name: "а/м до 3т",       types: ["любая", "верхняя", "боковая"], min: 1501, max: 3000 },
+    { name: "а/м до 1.5т",     types: ["любая", "верхняя", "боковая"], min: 1001, max: 1500 },
+    { name: "а/м до 1т",       types: ["любая", "верхняя", "боковая"], min: 0,    max: 1000 },
   ];
-  
+
   for (let i = 0; i < vehiclePriority.length; i++) {
     const rule = vehiclePriority[i];
     const fitsWeight =
       i === 0 ? weight <= rule.max : weight > vehiclePriority[i - 1].max && weight <= rule.max;
-    const fitsLoading = rule.types.includes(loweredType);
+    const fitsLoading = rule.types.includes(normalizedType);
+
     if (fitsWeight && fitsLoading) {
       return vehicles.find(v => v.name.toLowerCase() === rule.name.toLowerCase());
     }
