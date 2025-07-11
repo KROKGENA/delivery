@@ -58,6 +58,8 @@ function getLoadingTypesFromName(name) {
 function selectVehicle(weight, loadingType) {
   const normalizedType = (loadingType || "любая").toLowerCase();
 
+  console.log("🚚 Подбор авто: вес =", weight, "| тип загрузки =", normalizedType);
+
   const vehiclePriority = [
     { name: "Манипулятор 15т", types: ["manipulator"], min: 10001, max: 15000 },
     { name: "Манипулятор 10т", types: ["manipulator"], min: 5001, max: 10000 },
@@ -77,11 +79,16 @@ function selectVehicle(weight, loadingType) {
       i === 0 ? weight <= rule.max : weight > vehiclePriority[i - 1].max && weight <= rule.max;
     const fitsLoading = rule.types.includes(normalizedType);
 
+    console.log(`  🔍 Пробуем: ${rule.name} | Диапазон: ${rule.min}-${rule.max} | Подходит по весу: ${fitsWeight} | по загрузке: ${fitsLoading}`);
+
     if (fitsWeight && fitsLoading) {
-      return vehicles.find(v => v.name.toLowerCase() === rule.name.toLowerCase());
+      const found = vehicles.find(v => v.name.toLowerCase() === rule.name.toLowerCase());
+      console.log("✅ Найдено:", found?.name || "ничего");
+      return found;
     }
   }
 
+  console.warn("❌ Нет подходящего авто");
   return null;
 }
 
@@ -155,10 +162,14 @@ async function calculateDelivery() {
   const data = window.formData;
   const totalWeight = (data.weight_standard || 0) + (data.weight_large || 0);
   const loadingType = data.loading_type || "любая";
+
+  console.log("📦 Вес общий:", totalWeight, "| Тип загрузки:", loadingType); // ← ЭТА СТРОКА
+
   let deliveryCost = 0;
   let moversCost = 0;
   let vehicleName = "";
   let details = "";
+
 
   if (data.underground && parseFloat(data.height_limit) < 2.2) {
     let left = totalWeight;
