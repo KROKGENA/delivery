@@ -29,26 +29,34 @@ async function loadTariffs(forceReloadFromGit = false) {
 }
 
 function getMaxWeightFromName(name) {
-  if (name.includes("20т")) return 20000;
-  if (name.includes("15т")) return 15000;
-  if (name.includes("10т")) return 10000;
-  if (name.includes("5т")) return 5000;
-  if (name.includes("3т")) return 3000;
-  if (name.includes("1.5т")) return 1500;
-  if (name.includes("1т")) return 1000;
+  const lowered = name.toLowerCase();
+
+  if (/манипулятор 15т/.test(lowered)) return 15000;
+  if (/манипулятор 10т/.test(lowered)) return 10000;
+  if (/манипулятор 5т/.test(lowered)) return 5000;
+  if (/еврофура/.test(lowered)) return 20000;
+  if (/\b20т\b/.test(lowered)) return 20000;
+  if (/\b15т\b/.test(lowered)) return 15000;
+  if (/\b10т\b/.test(lowered)) return 10000;
+  if (/\b5т\b/.test(lowered)) return 5000;
+  if (/\b3т\b/.test(lowered)) return 3000;
+  if (/\b1\.5т\b/.test(lowered)) return 1500;
+  if (/\b1т\b/.test(lowered)) return 1000;
+
   return 0;
 }
 
 function getLoadingTypesFromName(name) {
-  if (name.toLowerCase().includes("гидролифт")) return ["гидролифт"];
-  if (name.toLowerCase().includes("манипулятор")) return ["manipulator"];
+  const lowered = name.toLowerCase();
+  if (lowered.includes("гидролифт")) return ["гидролифт"];
+  if (lowered.includes("манипулятор")) return ["manipulator"];
   return ["верхняя", "боковая", "любая"];
 }
 
 function selectVehicle(weight, loadingType) {
   const suitableByWeight = vehicles.filter(v => v.maxWeight >= weight);
   if (suitableByWeight.length === 0) {
-    console.warn("Нет машин, способных перевезти вес:", weight);
+    console.warn("❌ Нет машин, способных перевезти вес:", weight);
     return null;
   }
 
