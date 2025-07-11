@@ -57,31 +57,35 @@ function getLoadingTypesFromName(name) {
 
 function selectVehicle(weight, loadingType) {
   const normalizedType = (loadingType || "любая").toLowerCase();
-
   console.log("🚚 Подбор авто: вес =", weight, "| тип загрузки =", normalizedType);
 
   const vehiclePriority = [
-    { name: "Манипулятор 15т", types: ["manipulator"], min: 10001, max: 15000 },
-    { name: "Манипулятор 10т", types: ["manipulator"], min: 5001, max: 10000 },
-    { name: "Манипулятор 5т",  types: ["manipulator"], min: 0,    max: 5000 },
-    { name: "а/м 5т гидролифт", types: ["гидролифт"],    min: 0,    max: 5000 },
-    { name: "Еврофура 20т",    types: ["любая", "верхняя", "боковая"], min: 10001, max: 20000 },
-    { name: "а/м 10т",         types: ["любая", "верхняя", "боковая"], min: 5001, max: 10000 },
-    { name: "а/м 5т",          types: ["любая", "верхняя", "боковая"], min: 3001, max: 5000 },
-    { name: "а/м до 3т",       types: ["любая", "верхняя", "боковая"], min: 1501, max: 3000 },
-    { name: "а/м до 1.5т",     types: ["любая", "верхняя", "боковая"], min: 1001, max: 1500 },
-    { name: "а/м до 1т",       types: ["любая", "верхняя", "боковая"], min: 0,    max: 1000 },
+    { name: "Манипулятор 15т", min: 10001, max: 15000 },
+    { name: "Манипулятор 10т", min: 5001, max: 10000 },
+    { name: "Манипулятор 5т",  min: 0,    max: 5000 },
+    { name: "а/м 5т гидролифт", min: 0,    max: 5000 },
+    { name: "Еврофура 20т",    min: 10001, max: 20000 },
+    { name: "а/м 10т",         min: 5001, max: 10000 },
+    { name: "а/м 5т",          min: 3001, max: 5000 },
+    { name: "а/м до 3т",       min: 1501, max: 3000 },
+    { name: "а/м до 1.5т",     min: 1001, max: 1500 },
+    { name: "а/м до 1т",       min: 0,    max: 1000 },
   ];
 
   for (const rule of vehiclePriority) {
     const fitsWeight = weight >= rule.min && weight <= rule.max;
-    const fitsLoading = rule.types.includes(normalizedType);
 
-    console.log(`  🔍 Пробуем: ${rule.name} | Диапазон: ${rule.min}-${rule.max} | Подходит по весу: ${fitsWeight} | по загрузке: ${fitsLoading}`);
+    if (!fitsWeight) continue;
 
-    if (fitsWeight && fitsLoading) {
-      const found = vehicles.find(v => v.name.toLowerCase() === rule.name.toLowerCase());
-      console.log("✅ Найдено:", found?.name || "ничего");
+    const found = vehicles.find(v =>
+      v.name.toLowerCase() === rule.name.toLowerCase() &&
+      (normalizedType === "любая" || v.loadingTypes.includes(normalizedType))
+    );
+
+    console.log(`  🔍 Пробуем: ${rule.name} | Диапазон: ${rule.min}-${rule.max} | Найден: ${found?.name || "нет"}`);
+
+    if (found) {
+      console.log("✅ Найдено:", found.name);
       return found;
     }
   }
