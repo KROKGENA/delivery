@@ -5,23 +5,22 @@ async function loadTariffs(forceReloadFromGit = false) {
     const basePath = location.pathname.includes("/delivery/") ? "/delivery/" : "/";
     const saved = localStorage.getItem("custom_tariffs");
 
-    let json;
     if (saved && !forceReloadFromGit) {
       vehicles = JSON.parse(saved);
       console.log("✅ Загружено из localStorage");
     } else {
       const response = await fetch(`${basePath}data/tariffs.json?nocache=${Date.now()}`);
-      json = await response.json();
+      const json = await response.json();
       vehicles = json;
       localStorage.setItem("custom_tariffs", JSON.stringify(json));
       console.log("✅ Загружено с GitHub");
     }
 
-    vehicles = vehicles.map((v) => ({
+    vehicles = vehicles.map(v => ({
       ...v,
       maxWeight: getMaxWeightFromName(v.name),
       loadingTypes: getLoadingTypesFromName(v.name)
-    })).sort((a, b) => a.maxWeight - b.maxWeight);
+    }));
   } catch (e) {
     console.error("❌ Не удалось загрузить тарифы:", e);
     alert("Ошибка загрузки тарифов: " + e.message);
@@ -30,62 +29,69 @@ async function loadTariffs(forceReloadFromGit = false) {
 
 function getMaxWeightFromName(name) {
   const lowered = name.toLowerCase();
-
-  const patterns = new Map([
-    [/манипулятор 15т/, 15000],
-    [/манипулятор 10т/, 10000],
-    [/манипулятор 5т/, 5000],
-    [/еврофура/, 20000],
-    [/\b20т\b/, 20000],
-    [/\b15т\b/, 15000],
-    [/\b10т\b/, 10000],
-    [/\b5т\b/, 5000],
-    [/\b3т\b/, 3000],
-    [/\b1\.5т\b/, 1500],
-    [/\b1т\b/, 1000]
-  ]);
-
-  for (const [regex, weight] of patterns) {
-    if (regex.test(lowered)) return weight;
-  }
-
+  if (/манипулятор 15т/.test(lowered)) return 15000;
+  if (/манипулятор 10т/.test(lowered)) return 10000;
+  if (/манипулятор 5т/.test(lowered)) return 5000;
+  if (/еврофура/.test(lowered)) return 20000;
+  if (/\b20т\b/.test(lowered)) return 20000;
+  if (/\b15т\b/.test(lowered)) return 15000;
+  if (/\b10т\b/.test(lowered)) return 10000;
+  if (/\b5т\b/.test(lowered)) return 5000;
+  if (/\b3т\b/.test(lowered)) return 3000;
+  if (/\b1\.5т\b/.test(lowered)) return 1500;
+  if (/\b1т\b/.test(lowered)) return 1000;
   return 0;
 }
 
 function getLoadingTypesFromName(name) {
   const lowered = name.toLowerCase();
-
   const loadingMap = new Map([
     [/гидролифт/, ["гидролифт"]],
-    [/манипулятор/, ["manipulator"]]
+    [/манипулятор/, ["manipulator"]],
   ]);
-
   for (const [regex, types] of loadingMap) {
     if (regex.test(lowered)) return types;
   }
-
   return ["верхняя", "боковая", "любая"];
 }
 
 function selectVehicle(weight, loadingType) {
-  const suitableByWeight = vehicles.filter(v => v.maxWeight >= weight);
-  if (suitableByWeight.length === 0) {
-    console.warn("❌ Нет машин, способных перевезти вес:", weight);
-    return null;
+  const loweredType = loadingType.toLowerCase();
+
+  const vehiclePriority = [
+    { name: "а/м до 1т", max: 1000, types: ["верхняя", "боковая", "любая"] },
+    { name: "а/м до 1.5т", max: 1500, types: ["верхняя", "боковая", "любая"] },
+    { name: "а/м до 3т", max: 3000, types: ["верхняя", "боковая", "любая"] },
+    { name: "а/м 5т", max: 5000, types: ["верхняя", "боковая", "любая"] },
+    { name: "а/м 10т", max: 10000, types: ["верхняя", "боковая", "любая"] },
+    { name: "Еврофура 20т", max: 20000, types: ["верхняя", "боковая", "любая"] },
+    { name: "а/м 5т гидролифт", max: 5000, types: ["гидролифт"] },
+    { name: "Манипулятор 5т", max: 5000, types: ["manipulator"] },
+    { name: "Манипулятор 10т", max: 10000, types: ["manipulator"] },
+    { name: "Манипулятор 15т", max: 15000, types: ["manipulator"] },
+  ];
+
+  for (let i = 0; i < vehiclePriority.length; i++) {
+    const rule = vehiclePriority[i];
+    const fitsWeight =
+      i === 0 ? weight <= rule.max : weight > vehiclePriority[i - 1].max && weight <= rule.max;
+    const fitsLoading = rule.types.includes(loweredType);
+    if (fitsWeight && fitsLoading) {
+      return vehicles.find(v => v.name.toLowerCase() === rule.name.toLowerCase());
+    }
   }
 
-  const exactMatch = suitableByWeight.find(v => v.loadingTypes.includes(loadingType));
-  return exactMatch || suitableByWeight[0];
+  return null;
 }
 
 function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
-  const step = 0.1;
-  let total = 0;
-  for (let km = 0; km < distance; km += step) {
+  const kmStep = 0.1;
+  let cost = 0;
+  for (let km = kmStep; km <= distance; km += kmStep) {
     const rate = minRate + (baseRate - minRate) * Math.exp(-decay * km);
-    total += rate * step;
+    cost += rate * kmStep;
   }
-  return Math.round(total);
+  return Math.round(cost);
 }
 
 function getLoadingSurcharge(vehicle, loadingType) {
@@ -103,18 +109,17 @@ function getMoversCost(data) {
 
   const floor = parseInt(data.floor || 1);
   const hasLift = data.lift === "true";
-  const onlyUnload = data.only_unload === "true";
+  const isOnlyUnload = data.only_unload === "true";
   const standard = data.weight_standard || 0;
   const large = data.weight_large || 0;
   const format = data.large_format || "";
-
   let total = 0;
 
   if (large > 0) {
-    const liftOk = ["100x200", "100x260", "100x280"].includes(format);
-    if (onlyUnload) {
+    const liftAllowed = ["100x200", "100x260", "100x280"].includes(format);
+    if (isOnlyUnload) {
       total += large * 20;
-    } else if (liftOk && hasLift) {
+    } else if (liftAllowed && hasLift) {
       total += large * 30;
     } else {
       const rate = floor <= 5 ? 50 : floor <= 10 ? 60 : floor <= 20 ? 70 : 90;
@@ -123,7 +128,7 @@ function getMoversCost(data) {
   }
 
   if (standard > 0) {
-    if (onlyUnload) {
+    if (isOnlyUnload) {
       total += standard * 7;
     } else if (hasLift) {
       total += standard * 9;
@@ -137,8 +142,14 @@ function getMoversCost(data) {
 }
 
 async function calculateDelivery() {
-  if (vehicles.length === 0) await loadTariffs();
-  if (!window.formData) return alert("Сначала сохраните параметры");
+  if (vehicles.length === 0) {
+    await loadTariffs();
+  }
+
+  if (!window.formData) {
+    alert("Сначала сохраните параметры");
+    return;
+  }
 
   const data = window.formData;
   const totalWeight = (data.weight_standard || 0) + (data.weight_large || 0);
@@ -153,18 +164,25 @@ async function calculateDelivery() {
     const parts = [];
 
     while (left > 0) {
-      const chunk = Math.min(left, 1500);
-      parts.push(chunk);
-      left -= chunk;
+      if (left > 1500) {
+        parts.push(1500);
+        left -= 1500;
+      } else {
+        parts.push(left);
+        left = 0;
+      }
     }
 
     for (const weight of parts) {
       const v = selectVehicle(weight, "верхняя");
-      if (!v) continue;
+      if (!v) {
+        console.warn(`Не удалось подобрать машину для ${weight} кг`);
+        continue;
+      }
       const kmCost = calculateKmCostSmooth(data.deliveryDistance, v.basePerKm, v.minPerKm, v.decay);
       const surcharge = getLoadingSurcharge(v, "верхняя");
       deliveryCost += v.minTariff + kmCost + surcharge;
-      details += `<p>🚚 ${v.name} (${weight} кг): ${v.minTariff} ₽ + ${kmCost} ₽ + ${surcharge} ₽</p>`;
+      details += `<p>🚚 ${v.name} (${weight} кг): ${v.minTariff.toLocaleString()} ₽ + ${kmCost.toLocaleString()} ₽ + ${surcharge.toLocaleString()} ₽</p>`;
     }
 
     deliveryCost += 1500;
@@ -179,51 +197,57 @@ async function calculateDelivery() {
     const kmCost = calculateKmCostSmooth(data.deliveryDistance, v.basePerKm, v.minPerKm, v.decay);
     const surcharge = getLoadingSurcharge(v, loadingType);
     deliveryCost = v.minTariff + kmCost + surcharge;
-
     if (data.return_pallets) deliveryCost += 2500;
     if (data.precise_time) deliveryCost += 2500;
     if (data.underground) deliveryCost += 1500;
 
     vehicleName = v.name;
     details = `
-      <p><strong>Подача:</strong> ${v.minTariff} ₽</p>
-      <p><strong>Км:</strong> ${data.deliveryDistance.toFixed(2)} км ≈ ${kmCost} ₽</p>
-      ${surcharge > 0 ? `<p>Надбавка (${loadingType}): ${surcharge} ₽</p>` : ""}
-      ${data.underground ? `<p>Паркинг: 1500 ₽</p>` : ""}
-      ${data.return_pallets ? `<p>Возврат тары: 2500 ₽</p>` : ""}
-      ${data.precise_time ? `<p>Ко времени: 2500 ₽</p>` : ""}
+      <p><strong>Стоимость подачи:</strong> ${v.minTariff.toLocaleString()} ₽</p>
+      <p><strong>Расстояние:</strong> ${data.deliveryDistance.toFixed(2)} км ≈ ${kmCost.toLocaleString()} ₽</p>
+      ${surcharge > 0 ? `<p><strong>Надбавка за загрузку (${loadingType}):</strong> ${surcharge.toLocaleString()} ₽</p>` : ""}
+      ${data.underground ? `<p>Подземный паркинг: 1 500 ₽</p>` : ""}
+      ${data.return_pallets ? `<p>Возврат тары: 2 500 ₽</p>` : ""}
+      ${data.precise_time ? `<p>Доставка к точному времени: 2 500 ₽</p>` : ""}
     `;
   }
 
   moversCost = getMoversCost(data);
 
-  const resultHTML = `
+  const compactHtml = `
     <p><strong>🚚 Доставка:</strong> ${deliveryCost.toLocaleString()} ₽</p>
     <p><strong>👷 Грузчики:</strong> ${moversCost.toLocaleString()} ₽</p>
     <hr>
     <h3>Итого: ${(deliveryCost + moversCost).toLocaleString()} ₽</h3>
     <p><a href="#" onclick="toggleDetails(event)">Показать подробности</a></p>
     <div id="details_block" style="display:none;">
-      <h3>Подробности доставки</h3>
+      <h3>🚚 Расчёт стоимости доставки</h3>
       <p><strong>Транспорт:</strong> ${vehicleName}</p>
-      <p><strong>Вес:</strong> ${totalWeight} кг</p>
+      <p><strong>Общий вес:</strong> ${totalWeight} кг</p>
+      <p><strong>Тип загрузки:</strong> ${loadingType}</p>
+      <p><strong>Расстояние:</strong> ${data.deliveryDistance.toFixed(2)} км</p>
       ${details}
-      ${moversCost > 0 ? `<h3>Грузчики:</h3><p>${moversCost.toLocaleString()} ₽</p>` : ""}
+      ${moversCost > 0 ? `<h3>👷 Грузчики:</h3><p>${moversCost.toLocaleString()} ₽</p>` : ""}
     </div>
   `;
 
-  document.getElementById("delivery_result").innerHTML = resultHTML;
-  document.getElementById("movers_result").innerHTML = "";
-  document.getElementById("total_result").innerHTML = "";
+  document.getElementById("delivery_result").innerHTML = compactHtml;
 }
 
 function toggleDetails(e) {
   e.preventDefault();
   const block = document.getElementById("details_block");
   const link = e.target;
-  block.style.display = block.style.display === "block" ? "none" : "block";
-  link.textContent = block.style.display === "block" ? "Скрыть подробности" : "Показать подробности";
+  if (block.style.display === "block") {
+    block.style.display = "none";
+    link.textContent = "Показать подробности";
+  } else {
+    block.style.display = "block";
+    link.textContent = "Скрыть подробности";
+  }
 }
+
+// --- АДМИНКА ---
 
 function openAdminPanel() {
   if (vehicles.length === 0) {
@@ -232,10 +256,10 @@ function openAdminPanel() {
   }
 
   const wrapper = document.createElement("div");
-  wrapper.style = "position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:9999;padding:20px;overflow:auto;";
+  wrapper.style = "position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:9999;padding:20px;overflow:auto;font-family:sans-serif;";
   wrapper.id = "admin_panel";
 
-  wrapper.innerHTML = `
+  const html = `
     <h2>⚙️ Админка тарифов</h2>
     <p>Измените параметры и нажмите "Сохранить"</p>
     <table border="1" cellpadding="8" style="border-collapse:collapse;width:100%;max-width:900px">
@@ -244,18 +268,18 @@ function openAdminPanel() {
           <th>Машина</th>
           <th>Мин. тариф (₽)</th>
           <th>₽/км начальный</th>
-          <th>₽/км мин</th>
-          <th>Коэф. убывания</th>
+          <th>₽/км минимальный</th>
+          <th>Коэфф. уменьшения</th>
         </tr>
       </thead>
       <tbody>
         ${vehicles.map((v, i) => `
           <tr>
             <td>${v.name}</td>
-            <td><input type="number" value="${v.minTariff}" id="minTariff_${i}"></td>
-            <td><input type="number" value="${v.basePerKm}" id="basePerKm_${i}"></td>
-            <td><input type="number" value="${v.minPerKm}" id="minPerKm_${i}"></td>
-            <td><input type="number" value="${v.decay}" step="0.001" id="decay_${i}"></td>
+            <td><input type="number" value="${v.minTariff}" id="minTariff_${i}" style="width:100px"></td>
+            <td><input type="number" value="${v.basePerKm}" id="basePerKm_${i}" style="width:100px"></td>
+            <td><input type="number" value="${v.minPerKm}" id="minPerKm_${i}" style="width:100px"></td>
+            <td><input type="number" step="0.001" value="${v.decay}" id="decay_${i}" style="width:100px"></td>
           </tr>
         `).join("")}
       </tbody>
@@ -266,6 +290,7 @@ function openAdminPanel() {
     <button onclick="closeAdminPanel()">❌ Закрыть</button>
   `;
 
+  wrapper.innerHTML = html;
   document.body.appendChild(wrapper);
 }
 
@@ -283,12 +308,12 @@ function saveAdminTariffs() {
   });
 
   localStorage.setItem("custom_tariffs", JSON.stringify(vehicles));
-  alert("Тарифы обновлены!");
+  alert("Тарифы обновлены! Используются новые значения.");
   closeAdminPanel();
 }
 
 async function loadFromGit() {
   await loadTariffs(true);
-  alert("Загружено с Git и сброшено локальное");
+  alert("Тарифы загружены с Git. Локальные замены сброшены.");
   closeAdminPanel();
 }
