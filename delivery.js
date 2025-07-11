@@ -45,14 +45,9 @@ function getMaxWeightFromName(name) {
 
 function getLoadingTypesFromName(name) {
   const lowered = name.toLowerCase();
-  const loadingMap = new Map([
-    [/гидролифт/, ["гидролифт"]],
-    [/манипулятор/, ["manipulator"]],
-  ]);
-  for (const [regex, types] of loadingMap) {
-    if (regex.test(lowered)) return types;
-  }
-  return ["верхняя", "боковая", "любая"];
+  if (/гидролифт/.test(lowered)) return ["гидролифт"];
+  if (/манипулятор/.test(lowered)) return ["manipulator"];
+  return ["любая", "верхняя", "боковая"];
 }
 
 function selectVehicle(weight, loadingType) {
@@ -74,12 +69,11 @@ function selectVehicle(weight, loadingType) {
 
   for (const rule of vehiclePriority) {
     const fitsWeight = weight >= rule.min && weight <= rule.max;
-
     if (!fitsWeight) continue;
 
     const found = vehicles.find(v =>
       v.name.toLowerCase() === rule.name.toLowerCase() &&
-      (normalizedType === "любая" || v.loadingTypes.includes(normalizedType))
+      v.loadingTypes.includes(normalizedType)
     );
 
     console.log(`  🔍 Пробуем: ${rule.name} | Диапазон: ${rule.min}-${rule.max} | Найден: ${found?.name || "нет"}`);
