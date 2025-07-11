@@ -56,21 +56,22 @@ function getLoadingTypesFromName(name) {
 }
 
 function selectVehicle(weight, loadingType) {
-  const loweredType = loadingType.toLowerCase();
+  const normalizedType = (loadingType || "").toLowerCase();
 
+  // Чётко заданы правила подбора
   const vehiclePriority = [
-    { name: "а/м до 1т", max: 1000, types: ["верхняя", "боковая", "любая"] },
-    { name: "а/м до 1.5т", max: 1500, types: ["верхняя", "боковая", "любая"] },
-    { name: "а/м до 3т", max: 3000, types: ["верхняя", "боковая", "любая"] },
-    { name: "а/м 5т", max: 5000, types: ["верхняя", "боковая", "любая"] },
-    { name: "а/м 10т", max: 10000, types: ["верхняя", "боковая", "любая"] },
-    { name: "Еврофура 20т", max: 20000, types: ["верхняя", "боковая", "любая"] },
-    { name: "а/м 5т гидролифт", max: 5000, types: ["гидролифт"] },
-    { name: "Манипулятор 5т", max: 5000, types: ["manipulator"] },
-    { name: "Манипулятор 10т", max: 10000, types: ["manipulator"] },
-    { name: "Манипулятор 15т", max: 15000, types: ["manipulator"] },
+    { name: "Манипулятор 15т", types: ["manipulator"], min: 10001, max: 15000 },
+    { name: "Манипулятор 10т", types: ["manipulator"], min: 5001, max: 10000 },
+    { name: "Манипулятор 5т",  types: ["manipulator"], min: 0,    max: 5000   },
+    { name: "а/м 5т гидролифт", types: ["гидролифт"],    min: 0,    max: 5000   },
+    { name: "Еврофура 20т",    types: ["верхняя", "боковая", "любая"], min: 10001, max: 20000 },
+    { name: "а/м 10т",         types: ["верхняя", "боковая", "любая"], min: 5001, max: 10000 },
+    { name: "а/м 5т",          types: ["верхняя", "боковая", "любая"], min: 3001, max: 5000 },
+    { name: "а/м до 3т",       types: ["верхняя", "боковая", "любая"], min: 1501, max: 3000 },
+    { name: "а/м до 1.5т",     types: ["верхняя", "боковая", "любая"], min: 1001, max: 1500 },
+    { name: "а/м до 1т",       types: ["верхняя", "боковая", "любая"], min: 0,    max: 1000 },
   ];
-
+  
   for (let i = 0; i < vehiclePriority.length; i++) {
     const rule = vehiclePriority[i];
     const fitsWeight =
