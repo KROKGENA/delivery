@@ -228,7 +228,7 @@ async function calculateDelivery() {
     <p><strong>👷 Грузчики:</strong> ${moversCost.toLocaleString()} ₽</p>
     <hr>
     <h3>Итого: ${(deliveryCost + moversCost).toLocaleString()} ₽</h3>
-   /* <p><a href="#" onclick="toggleDetails(event)">Показать подробности</a></p>
+  <!-- <p><a href="#" onclick="toggleDetails(event)">Показать подробности</a></p> -->
     <div id="details_block" style="display:none;"> */
       <h3>🚚 Расчёт стоимости доставки</h3>
       <p><strong>Транспорт:</strong> ${vehicleName}</p>
