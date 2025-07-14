@@ -134,9 +134,9 @@ function getMoversCost(data) {
 
   if (standard > 0) {
     if (isOnlyUnload) {
-      total += standard * 2,5;
+      total += standard * 2.5;
     } else if (hasLift) {
-      total += standard * 3,5;
+      total += standard * 3.5;
     } else {
      const rate = floor <= 5 ? 3 : floor <= 10 ? 4 : floor <= 20 ? 6 : 8; // было 15+
       total += standard * rate;
