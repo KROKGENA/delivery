@@ -145,8 +145,6 @@ function getMoversCost(data) {
   return total;
 }
 
-// calculateDelivery остаётся как есть, либо пиши, если тоже подправить.
-
 
 async function calculateDelivery() {
   if (vehicles.length === 0) {
