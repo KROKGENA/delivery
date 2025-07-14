@@ -155,23 +155,21 @@ async function calculateDelivery() {
     alert("Сначала сохраните параметры");
     return;
   }
-  const totalWeight = (formData.weight_standard || 0) + (formData.weight_large || 0);
-if (totalWeight === 0) {
-  alert("Укажите вес плитки");
-  return;
-}
 
   const data = window.formData;
   const totalWeight = (data.weight_standard || 0) + (data.weight_large || 0);
-  const loadingType = data.loading_type || "любая";
+  if (totalWeight === 0) {
+    alert("Укажите вес плитки");
+    return;
+  }
 
-  console.log("📦 Вес общий:", totalWeight, "| Тип загрузки:", loadingType); // ← ЭТА СТРОКА
+  const loadingType = data.loading_type || "любая";
+  console.log("📦 Вес общий:", totalWeight, "| Тип загрузки:", loadingType);
 
   let deliveryCost = 0;
   let moversCost = 0;
   let vehicleName = "";
   let details = "";
-
 
   if (data.underground && parseFloat(data.height_limit) < 2.2) {
     let left = totalWeight;
@@ -233,8 +231,8 @@ if (totalWeight === 0) {
     <p><strong>👷 Грузчики:</strong> ${moversCost.toLocaleString()} ₽</p>
     <hr>
     <h3>Итого: ${(deliveryCost + moversCost).toLocaleString()} ₽</h3>
-  <!-- <p><a href="#" onclick="toggleDetails(event)">Показать подробности</a></p> -->
-    <div id="details_block" style="display:none;"> */
+    <!-- <p><a href="#" onclick="toggleDetails(event)">Показать подробности</a></p> -->
+    <div id="details_block" style="display:none;">
       <h3>🚚 Расчёт стоимости доставки</h3>
       <p><strong>Транспорт:</strong> ${vehicleName}</p>
       <p><strong>Общий вес:</strong> ${totalWeight} кг</p>
@@ -247,6 +245,7 @@ if (totalWeight === 0) {
 
   document.getElementById("delivery_result").innerHTML = compactHtml;
 }
+
 
 function toggleDetails(e) {
   e.preventDefault();
