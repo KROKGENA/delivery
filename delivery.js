@@ -88,7 +88,6 @@ function selectVehicle(weight, loadingType) {
   return null;
 }
 
-
 function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
   const kmStep = 0.1;
   let cost = 0;
@@ -120,17 +119,17 @@ function getMoversCost(data) {
   const format = data.large_format || "";
   let total = 0;
 
- if (large > 0) {
-  const liftAllowed = ["100x200", "100x260", "100x280"].includes(format);
-  if (isOnlyUnload) {
-    total += large * 10; // было 20
-  } else if (liftAllowed && hasLift) {
-    total += large * 15; // было 30
-  } else {
-    const rate = floor <= 5 ? 20 : floor <= 10 ? 30 : floor <= 20 ? 40 : 50;
-    total += large * rate;
+  if (large > 0) {
+    const liftAllowed = ["100x200", "100x260", "100x280"].includes(format);
+    if (isOnlyUnload) {
+      total += large * 10;
+    } else if (liftAllowed && hasLift) {
+      total += large * 15;
+    } else {
+      const rate = floor <= 5 ? 20 : floor <= 10 ? 30 : floor <= 20 ? 40 : 50;
+      total += large * rate;
+    }
   }
-}
 
   if (standard > 0) {
     if (isOnlyUnload) {
@@ -138,13 +137,16 @@ function getMoversCost(data) {
     } else if (hasLift) {
       total += standard * 3.5;
     } else {
-     const rate = floor <= 5 ? 3 : floor <= 10 ? 4 : floor <= 20 ? 6 : 8; // было 15+
+      const rate = floor <= 5 ? 3 : floor <= 10 ? 4 : floor <= 20 ? 6 : 8;
       total += standard * rate;
     }
   }
 
   return total;
 }
+
+// calculateDelivery остаётся как есть, либо пиши, если тоже подправить.
+
 
 async function calculateDelivery() {
   if (vehicles.length === 0) {
