@@ -120,25 +120,25 @@ function getMoversCost(data) {
   const format = data.large_format || "";
   let total = 0;
 
-  if (large > 0) {
-    const liftAllowed = ["100x200", "100x260", "100x280"].includes(format);
-    if (isOnlyUnload) {
-      total += large * 20;
-    } else if (liftAllowed && hasLift) {
-      total += large * 30;
-    } else {
-      const rate = floor <= 5 ? 50 : floor <= 10 ? 60 : floor <= 20 ? 70 : 90;
-      total += large * rate;
-    }
+ if (large > 0) {
+  const liftAllowed = ["100x200", "100x260", "100x280"].includes(format);
+  if (isOnlyUnload) {
+    total += large * 10; // было 20
+  } else if (liftAllowed && hasLift) {
+    total += large * 15; // было 30
+  } else {
+    const rate = floor <= 5 ? 20 : floor <= 10 ? 30 : floor <= 20 ? 40 : 50;
+    total += large * rate;
   }
+}
 
   if (standard > 0) {
     if (isOnlyUnload) {
-      total += standard * 7;
+      total += standard * 2,5;
     } else if (hasLift) {
-      total += standard * 9;
+      total += standard * 3,5;
     } else {
-      const rate = floor <= 5 ? 15 : floor <= 10 ? 20 : floor <= 20 ? 30 : 50;
+     const rate = floor <= 5 ? 3 : floor <= 10 ? 4 : floor <= 20 ? 6 : 8; // было 15+
       total += standard * rate;
     }
   }
