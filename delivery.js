@@ -155,6 +155,11 @@ async function calculateDelivery() {
     alert("Сначала сохраните параметры");
     return;
   }
+  const totalWeight = (formData.weight_standard || 0) + (formData.weight_large || 0);
+if (totalWeight === 0) {
+  alert("Укажите вес плитки");
+  return;
+}
 
   const data = window.formData;
   const totalWeight = (data.weight_standard || 0) + (data.weight_large || 0);
