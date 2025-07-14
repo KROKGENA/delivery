@@ -327,5 +327,27 @@
 
   <!-- Delivery logic -->
   <script src="delivery.js"></script>
+  <script>
+  $("#address").suggestions({
+    token: "53d32f43f22df54e47727e3ba091627532e7cda5",
+    type: "ADDRESS",
+    onSelect: function(suggestion) {
+      const lat = suggestion.data.geo_lat;
+      const lon = suggestion.data.geo_lon;
+
+      if (lat && lon) {
+        if (clientMarker) map.removeLayer(clientMarker);
+        clientMarker = L.marker([lat, lon]).addTo(map).bindPopup("Клиент").openPopup();
+        map.setView([lat, lon], 12);
+        drawRoute(lat, lon);
+        const distance = calculateDistance(warehouse[0], warehouse[1], lat, lon);
+        showResult(distance);
+      } else {
+        alert("У выбранного адреса нет координат.");
+      }
+    }
+  });
+</script>
+
 </body>
 </html>
