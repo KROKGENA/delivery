@@ -1,4 +1,5 @@
 let vehicles = [];
+let moversTariffs = null;
 
 async function loadTariffs(forceReloadFromGit = false) {
   try {
@@ -6,12 +7,15 @@ async function loadTariffs(forceReloadFromGit = false) {
     const saved = localStorage.getItem("custom_tariffs");
 
     if (saved && !forceReloadFromGit) {
-      vehicles = JSON.parse(saved);
+      const json = JSON.parse(saved);
+      vehicles = json.vehicles;
+      moversTariffs = json.movers;
       console.log("✅ Загружено из localStorage");
     } else {
       const response = await fetch(`${basePath}data/tariffs.json?nocache=${Date.now()}`);
       const json = await response.json();
-      vehicles = json;
+      vehicles = json.vehicles;
+      moversTariffs = json.movers;
       localStorage.setItem("custom_tariffs", JSON.stringify(json));
       console.log("✅ Загружено с GitHub");
     }
@@ -21,6 +25,8 @@ async function loadTariffs(forceReloadFromGit = false) {
       maxWeight: getMaxWeightFromName(v.name),
       loadingTypes: getLoadingTypesFromName(v.name)
     }));
+
+    window.tariffData = { vehicles, movers: moversTariffs };
   } catch (e) {
     console.error("❌ Не удалось загрузить тарифы:", e);
     alert("Ошибка загрузки тарифов: " + e.message);
@@ -52,7 +58,6 @@ function getLoadingTypesFromName(name) {
 
 function selectVehicle(weight, loadingType) {
   const normalizedType = (loadingType || "любая").toLowerCase();
-  console.log("🚚 Подбор авто: вес =", weight, "| тип загрузки =", normalizedType);
 
   const vehiclePriority = [
     { name: "Манипулятор 15т", min: 10001, max: 15000 },
@@ -76,15 +81,9 @@ function selectVehicle(weight, loadingType) {
       v.loadingTypes.includes(normalizedType)
     );
 
-    console.log(`  🔍 Пробуем: ${rule.name} | Диапазон: ${rule.min}-${rule.max} | Найден: ${found?.name || "нет"}`);
-
-    if (found) {
-      console.log("✅ Найдено:", found.name);
-      return found;
-    }
+    if (found) return found;
   }
 
-  console.warn("❌ Нет подходящего авто");
   return null;
 }
 
@@ -121,7 +120,6 @@ function getMoversCost(data) {
   const format = data.large_format || "";
   let total = 0;
 
-  // === 🧱 Стандартный формат ===
   if (standardWeight > 0 && movers.standard) {
     const unloadRate = movers.standard.unloadPerKg;
     const floorRates = movers.standard.floorPerKg;
@@ -137,25 +135,24 @@ function getMoversCost(data) {
     }
   }
 
-  // === 📐 Крупный формат ===
-  if (largeCount > 0 && movers.large?.formats?.[format]) {
-    const info = movers.large.formats[format];
+  if (largeCount > 0 && movers.largeFormat) {
+    const info = movers.largeFormat.find(f => f.format === format);
+    if (info) {
+      const perSheetRate = isOnlyUnload
+        ? info.noLiftPerFloor
+        : hasLift && info.liftAllowed
+          ? info.withLift
+          : info.noLiftPerFloor * floor;
 
-    const perSheetRate = isOnlyUnload
-      ? info.noLiftPerFloor // = то же самое что и подъем без лифта на 1 этаж
-      : hasLift && info.liftAllowed
-        ? info.withLift
-        : info.noLiftPerFloor * floor;
-
-    let subtotal = largeCount * perSheetRate;
-
-    if (subtotal < info.minTotal) subtotal = info.minTotal;
-
-    total += subtotal;
+      let subtotal = largeCount * perSheetRate;
+      if (subtotal < info.minTotal) subtotal = info.minTotal;
+      total += subtotal;
+    }
   }
 
   return total;
 }
+
 
 
 
