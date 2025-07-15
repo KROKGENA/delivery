@@ -5,19 +5,19 @@ async function loadTariffs(forceReloadFromGit = false) {
     const basePath = location.pathname.includes("/delivery/") ? "/delivery/" : "/";
     const saved = localStorage.getItem("custom_tariffs");
 
-if (saved && !forceReloadFromGit) {
-  const parsed = JSON.parse(saved);
-  vehicles = parsed.vehicles || [];
-  console.log("✅ Загружено из localStorage");
-} else {
-  const response = await fetch(`${basePath}data/tariffs.json?nocache=${Date.now()}`);
-  const json = await response.json();
-  vehicles = json.vehicles;
+    if (saved && !forceReloadFromGit) {
+      const parsed = JSON.parse(saved);
+      // 🔧 Исправление: если сохранено как массив, оборачиваем в объект
+      vehicles = Array.isArray(parsed) ? parsed : (parsed.vehicles || []);
+      console.log("✅ Загружено из localStorage");
+    } else {
+      const response = await fetch(`${basePath}data/tariffs.json?nocache=${Date.now()}`);
+      const json = await response.json();
+      vehicles = json.vehicles;
 
-  localStorage.setItem("custom_tariffs", JSON.stringify(json));
-  console.log("✅ Загружено с GitHub");
-}
-
+      localStorage.setItem("custom_tariffs", JSON.stringify(json));
+      console.log("✅ Загружено с GitHub");
+    }
 
     vehicles = vehicles.map(v => ({
       ...v,
@@ -60,14 +60,14 @@ function selectVehicle(weight, loadingType) {
   const vehiclePriority = [
     { name: "Манипулятор 15т", min: 10001, max: 15000 },
     { name: "Манипулятор 10т", min: 5001, max: 10000 },
-    { name: "Манипулятор 5т",  min: 0,    max: 5000 },
-    { name: "а/м 5т гидролифт", min: 0,    max: 5000 },
-    { name: "Еврофура 20т",    min: 10001, max: 20000 },
-    { name: "а/м 10т",         min: 5001, max: 10000 },
-    { name: "а/м 5т",          min: 3001, max: 5000 },
-    { name: "а/м до 3т",       min: 1501, max: 3000 },
-    { name: "а/м до 1.5т",     min: 1001, max: 1500 },
-    { name: "а/м до 1т",       min: 0,    max: 1000 },
+    { name: "Манипулятор 5т", min: 0, max: 5000 },
+    { name: "а/м 5т гидролифт", min: 0, max: 5000 },
+    { name: "Еврофура 20т", min: 10001, max: 20000 },
+    { name: "а/м 10т", min: 5001, max: 10000 },
+    { name: "а/м 5т", min: 3001, max: 5000 },
+    { name: "а/м до 3т", min: 1501, max: 3000 },
+    { name: "а/м до 1.5т", min: 1001, max: 1500 },
+    { name: "а/м до 1т", min: 0, max: 1000 },
   ];
 
   for (const rule of vehiclePriority) {
@@ -91,7 +91,6 @@ function selectVehicle(weight, loadingType) {
   return null;
 }
 
-
 function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
   const kmStep = 0.1;
   let cost = 0;
@@ -101,6 +100,9 @@ function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
   }
   return Math.round(cost);
 }
+
+// ✅ Продолжение будет вставлено ниже отдельно из-за длины
+// ... предыдущий код выше остаётся без изменений
 
 function getLoadingSurcharge(vehicle, loadingType) {
   const wt = vehicle.maxWeight;
@@ -123,67 +125,150 @@ function getMoversCost(data) {
   const format = data.large_format || "";
   let total = 0;
 
-// Таблица тарифов для крупного формата
-const largeFormats = {
-  "100x200": { canLift: true, rate: 300, min: 7000 },
-  "100x260": { canLift: true, rate: 500, min: 12000 },
-  "100x280": { canLift: true, rate: 500, min: 12000 },
-  "100x290": { canLift: false, rate: 500, min: 12000 },
-  "100x295": { canLift: false, rate: 500, min: 12000 },
-  "100x299": { canLift: false, rate: 500, min: 12000 },
-  "100x300": { canLift: false, rate: 500, min: 12000 },
-  "120x240": { canLift: false, rate: 500, min: 12000 },
-  "120x278": { canLift: false, rate: 550, min: 12000 },
-  "120x280": { canLift: false, rate: 550, min: 12000 },
-  "120x300": { canLift: false, rate: 550, min: 12000 },
-  "159x324": { canLift: false, rate: 700, min: 18000 },
-  "160x320": { canLift: false, rate: 700, min: 18000 },
-  "162x324": { canLift: false, rate: 700, min: 18000 },
-  "80x324":  { canLift: false, rate: 500, min: 12000 },
-};
+  const largeFormats = {
+    "100x200": { canLift: true, rate: 300, min: 7000 },
+    "100x260": { canLift: true, rate: 500, min: 12000 },
+    "100x280": { canLift: true, rate: 500, min: 12000 },
+    "100x290": { canLift: false, rate: 500, min: 12000 },
+    "100x295": { canLift: false, rate: 500, min: 12000 },
+    "100x299": { canLift: false, rate: 500, min: 12000 },
+    "100x300": { canLift: false, rate: 500, min: 12000 },
+    "120x240": { canLift: false, rate: 500, min: 12000 },
+    "120x278": { canLift: false, rate: 550, min: 12000 },
+    "120x280": { canLift: false, rate: 550, min: 12000 },
+    "120x300": { canLift: false, rate: 550, min: 12000 },
+    "159x324": { canLift: false, rate: 700, min: 18000 },
+    "160x320": { canLift: false, rate: 700, min: 18000 },
+    "162x324": { canLift: false, rate: 700, min: 18000 },
+    "80x324":  { canLift: false, rate: 500, min: 12000 },
+  };
 
-if (Array.isArray(data.large_sheets)) {
-  let sum = 0;
-  let maxMin = 0;
+  if (Array.isArray(data.large_sheets)) {
+    let sum = 0;
+    let maxMin = 0;
 
-  for (const item of data.large_sheets) {
-    const f = largeFormats[item.format];
-    const qty = parseInt(item.count) || 0;
-    if (!f || qty === 0) continue;
+    for (const item of data.large_sheets) {
+      const f = largeFormats[item.format];
+      const qty = parseInt(item.count) || 0;
+      if (!f || qty === 0) continue;
 
-    // Предупреждение если указано "лифт есть", но формат нельзя
-    if (hasLift && !f.canLift) {
-      console.warn(`⚠️ Формат ${item.format} не влезает в лифт`);
+      if (hasLift && !f.canLift) {
+        console.warn(`⚠️ Формат ${item.format} не влезает в лифт`);
+      }
+
+      const liftFactor = isOnlyUnload ? 1 : floor;
+      const cost = qty * f.rate * liftFactor;
+      sum += cost;
+
+      if (f.min > maxMin) maxMin = f.min;
     }
 
-    const liftFactor = isOnlyUnload ? 1 : floor;
-    const cost = qty * f.rate * liftFactor;
-    sum += cost;
-
-    if (f.min > maxMin) maxMin = f.min;
+    total += sum < maxMin ? maxMin : sum;
   }
 
-  total += sum < maxMin ? maxMin : sum;
-}
+  if (standard > 0) {
+    const unload = standard * 2;
+    let liftCost = 0;
 
-if (standard > 0) {
-  const unload = standard * 2;
-  let liftCost = 0;
+    if (!isOnlyUnload && floor > 1) {
+      if (hasLift) {
+        liftCost = standard * 2 * 1.3;
+      } else {
+        liftCost = standard * floor * 3;
+      }
 
-  if (!isOnlyUnload && floor > 1) {
-    if (hasLift) {
-      liftCost = standard * 2 * 1.3;
+      const totalWithLift = unload + liftCost;
+      total += totalWithLift < 6000 ? 6000 : totalWithLift;
     } else {
-      liftCost = standard * floor * 3;
+      total += unload;
     }
-
-    const totalWithLift = unload + liftCost;
-    total += totalWithLift < 6000 ? 6000 : totalWithLift;
-  } else {
-    total += unload; // Только выгрузка — без минималки
   }
+
+  return total;
 }
 
+// Продолжение следует...
+// ... предыдущий код выше остаётся без изменений
+
+function getLoadingSurcharge(vehicle, loadingType) {
+  const wt = vehicle.maxWeight;
+  if (loadingType === "любая") return 0;
+  if (wt <= 3000) return 1500;
+  if (wt === 5000) return loadingType === "боковая" ? 2000 : 2500;
+  if (wt === 10000) return loadingType === "боковая" ? 2500 : 3000;
+  if (wt === 20000) return loadingType === "боковая" ? 3000 : 3500;
+  return 0;
+}
+
+function getMoversCost(data) {
+  if (!data.need_movers) return 0;
+
+  const floor = parseInt(data.floor || 1);
+  const hasLift = data.lift === "true";
+  const isOnlyUnload = data.only_unload === "true";
+  const standard = data.weight_standard || 0;
+  const large = data.weight_large || 0;
+  const format = data.large_format || "";
+  let total = 0;
+
+  const largeFormats = {
+    "100x200": { canLift: true, rate: 300, min: 7000 },
+    "100x260": { canLift: true, rate: 500, min: 12000 },
+    "100x280": { canLift: true, rate: 500, min: 12000 },
+    "100x290": { canLift: false, rate: 500, min: 12000 },
+    "100x295": { canLift: false, rate: 500, min: 12000 },
+    "100x299": { canLift: false, rate: 500, min: 12000 },
+    "100x300": { canLift: false, rate: 500, min: 12000 },
+    "120x240": { canLift: false, rate: 500, min: 12000 },
+    "120x278": { canLift: false, rate: 550, min: 12000 },
+    "120x280": { canLift: false, rate: 550, min: 12000 },
+    "120x300": { canLift: false, rate: 550, min: 12000 },
+    "159x324": { canLift: false, rate: 700, min: 18000 },
+    "160x320": { canLift: false, rate: 700, min: 18000 },
+    "162x324": { canLift: false, rate: 700, min: 18000 },
+    "80x324":  { canLift: false, rate: 500, min: 12000 },
+  };
+
+  if (Array.isArray(data.large_sheets)) {
+    let sum = 0;
+    let maxMin = 0;
+
+    for (const item of data.large_sheets) {
+      const f = largeFormats[item.format];
+      const qty = parseInt(item.count) || 0;
+      if (!f || qty === 0) continue;
+
+      if (hasLift && !f.canLift) {
+        console.warn(`⚠️ Формат ${item.format} не влезает в лифт`);
+      }
+
+      const liftFactor = isOnlyUnload ? 1 : floor;
+      const cost = qty * f.rate * liftFactor;
+      sum += cost;
+
+      if (f.min > maxMin) maxMin = f.min;
+    }
+
+    total += sum < maxMin ? maxMin : sum;
+  }
+
+  if (standard > 0) {
+    const unload = standard * 2;
+    let liftCost = 0;
+
+    if (!isOnlyUnload && floor > 1) {
+      if (hasLift) {
+        liftCost = standard * 2 * 1.3;
+      } else {
+        liftCost = standard * floor * 3;
+      }
+
+      const totalWithLift = unload + liftCost;
+      total += totalWithLift < 6000 ? 6000 : totalWithLift;
+    } else {
+      total += unload;
+    }
+  }
 
   return total;
 }
@@ -202,13 +287,12 @@ async function calculateDelivery() {
   const totalWeight = (data.weight_standard || 0) + (data.weight_large || 0);
   const loadingType = data.loading_type || "любая";
 
-  console.log("📦 Вес общий:", totalWeight, "| Тип загрузки:", loadingType); // ← ЭТА СТРОКА
+  console.log("📦 Вес общий:", totalWeight, "| Тип загрузки:", loadingType);
 
   let deliveryCost = 0;
   let moversCost = 0;
   let vehicleName = "";
   let details = "";
-
 
   if (data.underground && parseFloat(data.height_limit) < 2.2) {
     let left = totalWeight;
@@ -270,8 +354,7 @@ async function calculateDelivery() {
     <p><strong>👷 Грузчики:</strong> ${moversCost.toLocaleString()} ₽</p>
     <hr>
     <h3>Итого: ${(deliveryCost + moversCost).toLocaleString()} ₽</h3>
-  <!-- <p><a href="#" onclick="toggleDetails(event)">Показать подробности</a></p> -->
-    <div id="details_block" style="display:none;"> */
+    <div id="details_block" style="display:none;">
       <h3>🚚 Расчёт стоимости доставки</h3>
       <p><strong>Транспорт:</strong> ${vehicleName}</p>
       <p><strong>Общий вес:</strong> ${totalWeight} кг</p>
@@ -298,7 +381,10 @@ function toggleDetails(e) {
   }
 }
 
-// --- АДМИНКА ---
+// Продолжение следует...
+// ... предыдущий код выше остаётся без изменений
+
+// ... calculateDelivery и toggleDetails уже добавлены
 
 function openAdminPanel() {
   if (vehicles.length === 0) {
@@ -312,7 +398,7 @@ function openAdminPanel() {
 
   const html = `
     <h2>⚙️ Админка тарифов</h2>
-    <p>Измените параметры и нажмите "Сохранить"</p>
+    <p>Измените параметры и нажмите \"Сохранить\"</p>
     <table border="1" cellpadding="8" style="border-collapse:collapse;width:100%;max-width:900px">
       <thead>
         <tr>
@@ -358,7 +444,8 @@ function saveAdminTariffs() {
     v.decay = parseFloat(document.getElementById(`decay_${i}`).value);
   });
 
-  localStorage.setItem("custom_tariffs", JSON.stringify(vehicles));
+  // 🔧 Оборачиваем в объект для совместимости с loadTariffs
+  localStorage.setItem("custom_tariffs", JSON.stringify({ vehicles }));
   alert("Тарифы обновлены! Используются новые значения.");
   closeAdminPanel();
 }
@@ -368,3 +455,5 @@ async function loadFromGit() {
   alert("Тарифы загружены с Git. Локальные замены сброшены.");
   closeAdminPanel();
 }
+
+// Конец полного delivery.js
