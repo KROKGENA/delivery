@@ -11,7 +11,8 @@ async function loadTariffs(forceReloadFromGit = false) {
     } else {
       const response = await fetch(`${basePath}data/tariffs.json?nocache=${Date.now()}`);
       const json = await response.json();
-      vehicles = json;
+      vehicles = json.vehicles;
+
       localStorage.setItem("custom_tariffs", JSON.stringify(json));
       console.log("✅ Загружено с GitHub");
     }
