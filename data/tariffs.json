@@ -11,3 +11,4 @@
     { "name": "Манипулятор 10т", "minTariff": 20000, "basePerKm": 240, "minPerKm": 150, "decay": 0.01 },
     { "name": "Манипулятор 15т", "minTariff": 25000, "basePerKm": 240, "minPerKm": 150, "decay": 0.01 }
   ]
+  }
