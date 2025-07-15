@@ -1,31 +1,36 @@
 let vehicles = [];
 let tariffData = null;
 
-async function loadTariffs(forceReload = false) {
+async function loadTariffs(forceReloadFromGit = false) {
   try {
     const basePath = location.pathname.includes("/delivery/") ? "/delivery/" : "/";
     const saved = localStorage.getItem("custom_tariffs");
 
-    if (saved && !forceReload) {
-      tariffData = JSON.parse(saved);
-      console.log("✅ Тарифы из localStorage");
+    let json;
+
+    if (saved && !forceReloadFromGit) {
+      json = JSON.parse(saved);
+      console.log("✅ Загружено из localStorage");
     } else {
       const response = await fetch(`${basePath}data/tariffs.json?nocache=${Date.now()}`);
-      tariffData = await response.json();
-      localStorage.setItem("custom_tariffs", JSON.stringify(tariffData));
-      console.log("✅ Тарифы с GitHub");
+      json = await response.json();
+      localStorage.setItem("custom_tariffs", JSON.stringify(json));
+      console.log("✅ Загружено с GitHub");
     }
 
-    vehicles = tariffData.vehicles.map(v => ({
+    window.tariffData = json;
+
+    vehicles = json.vehicles.map(v => ({
       ...v,
       maxWeight: getMaxWeightFromName(v.name),
       loadingTypes: getLoadingTypesFromName(v.name)
     }));
   } catch (e) {
-    console.error("❌ Ошибка загрузки тарифов:", e);
+    console.error("❌ Не удалось загрузить тарифы:", e);
     alert("Ошибка загрузки тарифов: " + e.message);
   }
 }
+
 
 function getMaxWeightFromName(name) {
   const lowered = name.toLowerCase();
