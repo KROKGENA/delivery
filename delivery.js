@@ -1,6 +1,3 @@
-
-// delivery.js — финальная версия
-
 let vehicles = [];
 let tariffData = null;
 
@@ -10,7 +7,6 @@ async function loadTariffs(forceReloadFromGit = false) {
     const saved = localStorage.getItem("custom_tariffs");
 
     let json;
-
     if (saved && !forceReloadFromGit) {
       json = JSON.parse(saved);
       console.log("✅ Загружено из localStorage");
@@ -21,8 +17,7 @@ async function loadTariffs(forceReloadFromGit = false) {
       console.log("✅ Загружено с GitHub");
     }
 
-    window.tariffData = json;
-
+    tariffData = json;
     vehicles = json.vehicles.map(v => ({
       ...v,
       maxWeight: getMaxWeightFromName(v.name),
@@ -40,13 +35,13 @@ function getMaxWeightFromName(name) {
   if (/манипулятор 10т/.test(lowered)) return 10000;
   if (/манипулятор 5т/.test(lowered)) return 5000;
   if (/еврофура/.test(lowered)) return 20000;
-  if (/20т/.test(lowered)) return 20000;
-  if (/15т/.test(lowered)) return 15000;
-  if (/10т/.test(lowered)) return 10000;
-  if (/5т/.test(lowered)) return 5000;
-  if (/3т/.test(lowered)) return 3000;
-  if (/1\.5т/.test(lowered)) return 1500;
-  if (/1т/.test(lowered)) return 1000;
+  if (/\b20т\b/.test(lowered)) return 20000;
+  if (/\b15т\b/.test(lowered)) return 15000;
+  if (/\b10т\b/.test(lowered)) return 10000;
+  if (/\b5т\b/.test(lowered)) return 5000;
+  if (/\b3т\b/.test(lowered)) return 3000;
+  if (/\b1\.5т\b/.test(lowered)) return 1500;
+  if (/\b1т\b/.test(lowered)) return 1000;
   return 0;
 }
 
@@ -59,7 +54,6 @@ function getLoadingTypesFromName(name) {
 
 function selectVehicle(weight, loadingType) {
   const normalizedType = (loadingType || "любая").toLowerCase();
-
   const vehiclePriority = [
     { name: "Манипулятор 15т", min: 10001, max: 15000 },
     { name: "Манипулятор 10т", min: 5001, max: 10000 },
@@ -136,7 +130,7 @@ function getMoversCost(data) {
     }
   }
 
-  if (largeCount > 0 && movers.large && movers.large.formats[format]) {
+  if (largeCount > 0 && movers.large && movers.large.formats && format in movers.large.formats) {
     const info = movers.large.formats[format];
     if (info) {
       const perSheetRate = isOnlyUnload
@@ -157,7 +151,6 @@ function getMoversCost(data) {
 
 async function calculateDelivery() {
   if (vehicles.length === 0) await loadTariffs();
-
   if (!window.formData) return alert("Сначала сохраните параметры");
 
   const data = window.formData;
@@ -240,5 +233,3 @@ async function calculateDelivery() {
 
   document.getElementById("delivery_result").innerHTML = html;
 }
-
-// Всё, конец delivery.js
