@@ -5,17 +5,19 @@ async function loadTariffs(forceReloadFromGit = false) {
     const basePath = location.pathname.includes("/delivery/") ? "/delivery/" : "/";
     const saved = localStorage.getItem("custom_tariffs");
 
-    if (saved && !forceReloadFromGit) {
-      vehicles = JSON.parse(saved);
-      console.log("✅ Загружено из localStorage");
-    } else {
-      const response = await fetch(`${basePath}data/tariffs.json?nocache=${Date.now()}`);
-      const json = await response.json();
-      vehicles = json.vehicles;
+if (saved && !forceReloadFromGit) {
+  const parsed = JSON.parse(saved);
+  vehicles = parsed.vehicles || [];
+  console.log("✅ Загружено из localStorage");
+} else {
+  const response = await fetch(`${basePath}data/tariffs.json?nocache=${Date.now()}`);
+  const json = await response.json();
+  vehicles = json.vehicles;
 
-      localStorage.setItem("custom_tariffs", JSON.stringify(json));
-      console.log("✅ Загружено с GitHub");
-    }
+  localStorage.setItem("custom_tariffs", JSON.stringify(json));
+  console.log("✅ Загружено с GitHub");
+}
+
 
     vehicles = vehicles.map(v => ({
       ...v,
