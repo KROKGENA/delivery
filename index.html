@@ -340,6 +340,47 @@
     }
   });
 </script>
+  <script>
+function addLargeFormatRow() {
+  const tbody = document.querySelector("#large_format_table tbody");
+  const row = document.createElement("tr");
+
+  const formatCell = document.createElement("td");
+  const select = document.createElement("select");
+  const formats = [
+    "", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299",
+    "100x300", "120x240", "120x278", "120x280", "120x300", "159x324",
+    "160x320", "162x324", "80x324"
+  ];
+  formats.forEach(f => {
+    const option = document.createElement("option");
+    option.value = f;
+    option.textContent = f || "Выберите";
+    select.appendChild(option);
+  });
+  formatCell.appendChild(select);
+
+  const qtyCell = document.createElement("td");
+  const qtyInput = document.createElement("input");
+  qtyInput.type = "number";
+  qtyInput.min = "1";
+  qtyInput.style.width = "60px";
+  qtyCell.appendChild(qtyInput);
+
+  const deleteCell = document.createElement("td");
+  const btn = document.createElement("button");
+  btn.textContent = "✖";
+  btn.type = "button";
+  btn.onclick = () => row.remove();
+  deleteCell.appendChild(btn);
+
+  row.appendChild(formatCell);
+  row.appendChild(qtyCell);
+  row.appendChild(deleteCell);
+  tbody.appendChild(row);
+}
+</script>
+
 
 </body>
 </html>
