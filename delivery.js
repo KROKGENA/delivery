@@ -118,10 +118,12 @@ function getMoversCost(data) {
 
   const standardWeight = data.weight_standard || 0;
   const largeCount = parseInt(data.large_count || 0);
-  const format = (data.large_format || "").replace("x", "×");
+  const rawFormat = data.large_format || "";
+  const normalizedFormat = rawFormat.replace("x", "×");
+
   let total = 0;
 
-  // Стандартная плитка
+  // === Стандартная плитка ===
   if (standardWeight > 0 && movers.standard) {
     const unloadRate = movers.standard.unloadPerKg;
     const floorRates = movers.standard.floorPerKg;
@@ -137,11 +139,16 @@ function getMoversCost(data) {
     }
   }
 
-  // Крупноформат
+  // === Крупноформатная плитка ===
   const formats = movers.large?.formats || {};
-  const info = formats[format];
+  const info = formats[normalizedFormat];
 
-  if (largeCount > 0 && info) {
+  if (largeCount > 0) {
+    if (!info) {
+      alert(`⚠️ Формат плитки "${rawFormat}" не поддерживается тарифами.\nВыберите доступный формат.`);
+      return 0;
+    }
+
     const perSheet = isOnlyUnload
       ? info.noLiftPerFloor
       : hasLift && info.liftAllowed
@@ -156,6 +163,7 @@ function getMoversCost(data) {
 
   return Math.round(total);
 }
+
 
 // === DELIVERY ===
 async function calculateDelivery() {
