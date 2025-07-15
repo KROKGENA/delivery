@@ -2,71 +2,16 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Калькулятор доставки</title>
+  <title>Калькулятор доставки плитки</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" />
-  <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      margin: 20px;
-      background: #fff;
-      color: #333;
-    }
-    h1 {
-      color: #1e2d7d;
-    }
-    fieldset {
-      background: #f9f9f9;
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      max-width: 700px;
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      margin: 12px 0 6px;
-    }
-    input, select {
-      padding: 8px;
-      font-size: 14px;
-      width: 100%;
-      max-width: 400px;
-    }
-    button {
-      background: #1e2d7d;
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 5px;
-      cursor: pointer;
-      margin: 8px 8px 0 0;
-    }
-    #delivery_result {
-      background: #eef3ff;
-      padding: 15px;
-      margin-top: 20px;
-      border-left: 5px solid #1e2d7d;
-      border-radius: 5px;
-      max-width: 700px;
-    }
-    #map {
-      height: 400px;
-      margin-top: 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-  </style>
 </head>
 <body>
+  <h1>Калькулятор доставки</h1>
 
-  <h1>Калькулятор доставки плитки</h1>
-
-  <label>Введите адрес:
-    <input type="text" id="address" placeholder="г. Москва, ул. Примерная 1">
+  <label>Или введите адрес:
+    <input type="text" id="address" placeholder="г. Подольск, ул. Ленина 10">
     <button type="button" onclick="geocodeAddress()">Найти</button>
   </label>
 
@@ -75,12 +20,12 @@
       <legend>Параметры доставки</legend>
 
       <label>Вес стандартной плитки (кг):</label>
-      <input type="number" id="weight_standard" min="0">
+      <input type="number" id="weight_standard" min="0" step="1">
 
       <label>Вес крупной плитки (кг):</label>
-      <input type="number" id="weight_large" min="0" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'block' : 'none';">
+      <input type="number" id="weight_large" min="0" step="1" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'inline' : 'none';">
 
-      <div id="large_format_block" style="display:none;">
+      <span id="large_format_block" style="display:none;">
         <label>Формат крупной плитки:</label>
         <select id="large_format">
           <option value="">Выберите формат</option>
@@ -100,9 +45,7 @@
           <option>162x324</option>
           <option>80x324</option>
         </select>
-        <label>Количество листов:</label>
-        <input type="number" id="large_count" min="1" value="1">
-      </div>
+      </span>
 
       <label>Тип загрузки:</label>
       <select id="loading_type">
@@ -115,68 +58,96 @@
 
       <label><input type="checkbox" id="return_pallets"> Возврат тары</label>
       <label><input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';"> Подземный паркинг</label>
-      <div id="height_block" style="display:none;">
+      <div id="height_block" style="display:none; margin-left: 20px;">
         <label>Ограничение по высоте (м):</label>
-        <input type="number" id="height_limit" step="0.1">
+        <input type="number" id="height_limit" min="1" step="0.1">
       </div>
 
       <label><input type="checkbox" id="precise_time" onchange="document.getElementById('time_block').style.display = this.checked ? 'block' : 'none';"> Доставка к точному времени</label>
-      <div id="time_block" style="display:none;">
+      <div id="time_block" style="display:none; margin-left: 20px;">
         <label>Время:</label>
         <input type="time" id="delivery_time">
       </div>
 
       <label><input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';"> Нужны грузчики</label>
-      <div id="movers_block" style="display:none;">
+      <div id="movers_block" style="display:none; margin-left: 20px;">
         <label><input type="radio" name="only_unload" value="true" checked> Только выгрузка</label>
         <label><input type="radio" name="only_unload" value="false"> Выгрузка и подъём</label>
-        <label>Этаж:</label>
-        <input type="number" id="floor" min="1">
+        <br/>
+        Этаж: <input type="number" id="floor" min="1">
+        <br/>
         <label><input type="radio" name="lift" value="true"> Есть лифт</label>
         <label><input type="radio" name="lift" value="false" checked> Нет лифта</label>
       </div>
     </fieldset>
-
-    <button type="button" onclick="openAdminPanel()">⚙️ Админка тарифов</button>
+    <!-- <button type="button" onclick="openAdminPanel()">⚙️ Админка тарифов</button> -->
     <button type="button" onclick="saveFormData()">Сохранить параметры</button>
     <button type="button" onclick="clearFormData()">Сбросить всё</button>
-    <button type="button" onclick="saveFormData(); calculateDelivery()">Рассчитать стоимость</button>
+    <button type="button" onclick="(async () => await calculateDelivery())()">Рассчитать стоимость</button>
+    <!-- <button type="button" onclick="viewSavedParams()">Посмотреть параметры</button> -->
 
   </form>
 
-  <div id="delivery_result"></div>
-  <div id="map"></div>
+  <!-- Вывод расчётов -->
+  <div id="delivery_result" style="margin-top: 20px;"></div>
+  <div id="movers_result"></div>
+  <div id="total_result" style="font-weight: bold; margin-top: 10px;"></div>
 
-  <!-- Подключение JS -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/js/jquery.suggestions.min.js"></script>
+  <div id="map" style="height: 400px; margin-top:20px;"></div>
+
+  <!-- Leaflet -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.min.js"></script>
-  <script src="delivery.js"></script>
+
+  <!-- Логика карты и формы -->
   <script>
-    // Запуск карты и маршрута
     const warehouse = [54.907129, 38.054109];
     const map = L.map('map').setView(warehouse, 10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    L.marker(warehouse).addTo(map).bindPopup("Склад").openPopup();
     let clientMarker, routeControl;
 
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    L.marker(warehouse).addTo(map).bindPopup("Склад").openPopup();
+ //   L.circle(warehouse, { radius: 40000, color: 'green', fillOpacity: 0.1 }).addTo(map);
+
     map.on('click', function(e) {
-      const { lat, lng } = e.latlng;
+      const lat = e.latlng.lat;
+      const lon = e.latlng.lng;
       if (clientMarker) map.removeLayer(clientMarker);
-      clientMarker = L.marker([lat, lng]).addTo(map).bindPopup("Клиент").openPopup();
-      drawRoute(lat, lng);
-      reverseGeocode(lat, lng);
-      const distance = calculateDistance(warehouse[0], warehouse[1], lat, lng);
+      clientMarker = L.marker([lat, lon]).addTo(map).bindPopup("Клиент").openPopup();
+      reverseGeocode(lat, lon);
+      drawRoute(lat, lon);
+      const distance = calculateDistance(warehouse[0], warehouse[1], lat, lon);
       showResult(distance);
     });
 
-    function drawRoute(lat, lon) {
+    function geocodeAddress() {
+      const query = document.getElementById('address').value;
+      if (!query) return;
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            if (clientMarker) map.removeLayer(clientMarker);
+            clientMarker = L.marker([lat, lon]).addTo(map).bindPopup("Клиент").openPopup();
+            map.setView([lat, lon], 12);
+            drawRoute(lat, lon);
+            const distance = calculateDistance(warehouse[0], warehouse[1], lat, lon);
+            showResult(distance);
+          } else {
+            alert('Адрес не найден');
+          }
+        });
+    }
+
+    function drawRoute(destLat, destLon) {
       if (routeControl) map.removeControl(routeControl);
       routeControl = L.Routing.control({
-        waypoints: [L.latLng(warehouse[0], warehouse[1]), L.latLng(lat, lon)],
+        waypoints: [L.latLng(warehouse[0], warehouse[1]), L.latLng(destLat, destLon)],
         routeWhileDragging: false,
         draggableWaypoints: false,
+        addWaypoints: false,
         createMarker: () => null
       }).addTo(map);
     }
@@ -185,8 +156,10 @@
       const R = 6371;
       const dLat = (lat2 - lat1) * Math.PI / 180;
       const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) *
+                Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
     }
 
     function reverseGeocode(lat, lon) {
@@ -200,88 +173,52 @@
     }
 
     function showResult(distance) {
+      const inside = distance <= 40;
+      const outsideKm = inside ? 0 : (distance - 40).toFixed(2);
       window.deliveryDistance = parseFloat(distance.toFixed(2));
-      window.extraDistance = Math.max(0, deliveryDistance - 40);
-    }
-
-    function geocodeAddress() {
-      const address = document.getElementById('address').value;
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data[0]) {
-            const lat = parseFloat(data[0].lat);
-            const lon = parseFloat(data[0].lon);
-            if (clientMarker) map.removeLayer(clientMarker);
-            clientMarker = L.marker([lat, lon]).addTo(map).bindPopup("Клиент").openPopup();
-            map.setView([lat, lon], 12);
-            drawRoute(lat, lon);
-            const distance = calculateDistance(warehouse[0], warehouse[1], lat, lon);
-            showResult(distance);
-          } else {
-            alert("Адрес не найден");
-          }
-        });
+      window.extraDistance = parseFloat(outsideKm);
     }
 
     function saveFormData() {
-      if (!window.deliveryDistance) {
-        alert("Сначала укажите адрес или кликните по карте");
-        return;
-      }
       window.formData = {
         weight_standard: +document.getElementById('weight_standard').value || 0,
         weight_large: +document.getElementById('weight_large').value || 0,
         large_format: document.getElementById('large_format').value,
-        large_count: +document.getElementById('large_count')?.value || 0,
         loading_type: document.getElementById('loading_type').value,
         return_pallets: document.getElementById('return_pallets').checked,
         underground: document.getElementById('underground').checked,
-        height_limit: +document.getElementById('height_limit').value || null,
+        height_limit: document.getElementById('height_limit').value || null,
         precise_time: document.getElementById('precise_time').checked,
-        delivery_time: document.getElementById('delivery_time').value,
+        delivery_time: document.getElementById('precise_time').checked ? document.getElementById('delivery_time').value : null,
         need_movers: document.getElementById('need_movers').checked,
-        floor: +document.getElementById('floor').value || 1,
+        floor: document.getElementById('floor').value || null,
         only_unload: document.querySelector('input[name="only_unload"]:checked')?.value,
         lift: document.querySelector('input[name="lift"]:checked')?.value,
         deliveryDistance: window.deliveryDistance,
         extraDistance: window.extraDistance
       };
-      alert("Параметры сохранены");
+      alert('Параметры сохранены');
     }
 
     function clearFormData() {
       window.formData = {};
-      document.getElementById("deliveryForm").reset();
-      document.getElementById("delivery_result").innerHTML = '';
+      document.getElementById('deliveryForm').reset();
       document.getElementById('large_format_block').style.display = 'none';
       document.getElementById('height_block').style.display = 'none';
       document.getElementById('movers_block').style.display = 'none';
       document.getElementById('time_block').style.display = 'none';
+      document.getElementById("delivery_result").innerHTML = '';
+      document.getElementById("movers_result").innerHTML = '';
+      document.getElementById("total_result").innerHTML = '';
     }
 
-    // Инициализация Dadata
-    $("#address").suggestions({
-      token: "53d32f43f22df54e47727e3ba091627532e7cda5",
-      type: "ADDRESS",
-      onSelect: function(suggestion) {
-        const lat = suggestion.data.geo_lat;
-        const lon = suggestion.data.geo_lon;
-        if (lat && lon) {
-          if (clientMarker) map.removeLayer(clientMarker);
-          clientMarker = L.marker([lat, lon]).addTo(map).bindPopup("Клиент").openPopup();
-          map.setView([lat, lon], 12);
-          drawRoute(lat, lon);
-          const distance = calculateDistance(warehouse[0], warehouse[1], lat, lon);
-          showResult(distance);
-        } else {
-          alert("У адреса нет координат");
-        }
-      }
-    });
-
-    // Подгружаем тарифы при запуске
-    loadTariffs();
+    function viewSavedParams() {
+      if (!window.formData) return alert('Нет сохранённых параметров');
+      alert(JSON.stringify(window.formData, null, 2));
+    }
   </script>
+
+  <!-- Delivery logic -->
+  <script src="delivery.js"></script>
 </body>
 </html>
