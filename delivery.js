@@ -1,13 +1,14 @@
+// === GLOBAL STATE ===
 let vehicles = [];
 let tariffData = null;
 
+// === LOAD TARIFFS ===
 async function loadTariffs(forceReloadFromGit = false) {
   try {
     const basePath = location.pathname.includes("/delivery/") ? "/delivery/" : "/";
     const saved = localStorage.getItem("custom_tariffs");
 
     let json;
-
     if (saved && !forceReloadFromGit) {
       json = JSON.parse(saved);
       console.log("✅ Загружено из localStorage");
@@ -31,7 +32,7 @@ async function loadTariffs(forceReloadFromGit = false) {
   }
 }
 
-
+// === VEHICLE UTILS ===
 function getMaxWeightFromName(name) {
   const lowered = name.toLowerCase();
   if (/манипулятор 15т/.test(lowered)) return 15000;
@@ -106,6 +107,7 @@ function getLoadingSurcharge(vehicle, loadingType) {
   return 0;
 }
 
+// === MOVERS ===
 function getMoversCost(data) {
   if (!data.need_movers || !tariffData || !tariffData.movers) return 0;
 
@@ -115,10 +117,11 @@ function getMoversCost(data) {
   const isOnlyUnload = data.only_unload === "true";
 
   const standardWeight = data.weight_standard || 0;
-  const largeCount = data.large_count || 0;
-  const format = data.large_format || "";
+  const largeCount = parseInt(data.large_count || 0);
+  const format = (data.large_format || "").replace("x", "×");
   let total = 0;
 
+  // Стандартная плитка
   if (standardWeight > 0 && movers.standard) {
     const unloadRate = movers.standard.unloadPerKg;
     const floorRates = movers.standard.floorPerKg;
@@ -134,28 +137,29 @@ function getMoversCost(data) {
     }
   }
 
-  if (largeCount > 0 && movers.largeFormat) {
-    const info = movers.largeFormat.find(f => f.format === format);
-    if (info) {
-      const perSheetRate = isOnlyUnload
-        ? info.noLiftPerFloor
-        : hasLift && info.liftAllowed
-          ? info.withLift
-          : info.noLiftPerFloor * floor;
+  // Крупноформат
+  const formats = movers.large?.formats || {};
+  const info = formats[format];
 
-      let subtotal = largeCount * perSheetRate;
-      if (subtotal < info.minTotal) subtotal = info.minTotal;
+  if (largeCount > 0 && info) {
+    const perSheet = isOnlyUnload
+      ? info.noLiftPerFloor
+      : hasLift && info.liftAllowed
+        ? info.withLift
+        : info.noLiftPerFloor * floor;
 
-      total += subtotal;
-    }
+    let subtotal = largeCount * perSheet;
+    if (subtotal < info.minTotal) subtotal = info.minTotal;
+
+    total += subtotal;
   }
 
-  return total;
+  return Math.round(total);
 }
 
+// === DELIVERY ===
 async function calculateDelivery() {
   if (vehicles.length === 0) await loadTariffs();
-
   if (!window.formData) return alert("Сначала сохраните параметры");
 
   const data = window.formData;
@@ -187,7 +191,6 @@ async function calculateDelivery() {
     for (const weight of parts) {
       const v = selectVehicle(weight, "верхняя");
       if (!v) continue;
-
       const kmCost = calculateKmCostSmooth(data.deliveryDistance, v.basePerKm, v.minPerKm, v.decay);
       const surcharge = getLoadingSurcharge(v, "верхняя");
       deliveryCost += v.minTariff + kmCost + surcharge;
@@ -240,6 +243,7 @@ async function calculateDelivery() {
   document.getElementById("delivery_result").innerHTML = html;
 }
 
+// === TOGGLE DETAILS ===
 function toggleDetails(e) {
   e.preventDefault();
   const block = document.getElementById("details_block");
