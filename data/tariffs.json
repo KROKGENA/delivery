@@ -1,12 +1,150 @@
-[
-  { "name": "а/м до 1т", "minTariff": 4000, "basePerKm": 145, "minPerKm": 60, "decay": 0.015 },
-  { "name": "а/м до 1.5т", "minTariff": 4000, "basePerKm": 160, "minPerKm": 60, "decay": 0.015 },
-  { "name": "а/м до 3т", "minTariff": 4500, "basePerKm": 175, "minPerKm": 65, "decay": 0.012 },
-  { "name": "а/м 5т", "minTariff": 5000, "basePerKm": 185, "minPerKm": 75, "decay": 0.012 },
-  { "name": "а/м 5т гидролифт", "minTariff": 6000, "basePerKm": 154, "minPerKm": 100, "decay": 0.012 },
-  { "name": "а/м 10т", "minTariff": 8000, "basePerKm": 210, "minPerKm": 110, "decay": 0.01 },
-  { "name": "Еврофура 20т", "minTariff": 10000, "basePerKm": 250, "minPerKm": 120, "decay": 0.01 },
-  { "name": "Манипулятор 5т", "minTariff": 15000, "basePerKm": 240, "minPerKm": 150, "decay": 0.01 },
-  { "name": "Манипулятор 10т", "minTariff": 20000, "basePerKm": 240, "minPerKm": 150, "decay": 0.01 },
-  { "name": "Манипулятор 15т", "minTariff": 25000, "basePerKm": 240, "minPerKm": 150, "decay": 0.01 }
-]
+{
+  "vehicles": [
+    { "name": "а/м до 1т", "minTariff": 4000, "basePerKm": 145, "minPerKm": 60, "decay": 0.015 },
+    { "name": "а/м до 1.5т", "minTariff": 4000, "basePerKm": 160, "minPerKm": 60, "decay": 0.015 },
+    { "name": "а/м до 3т", "minTariff": 4500, "basePerKm": 175, "minPerKm": 65, "decay": 0.012 },
+    { "name": "а/м 5т", "minTariff": 5000, "basePerKm": 185, "minPerKm": 75, "decay": 0.012 },
+    { "name": "а/м 5т гидролифт", "minTariff": 6000, "basePerKm": 154, "minPerKm": 100, "decay": 0.012 },
+    { "name": "а/м 10т", "minTariff": 8000, "basePerKm": 210, "minPerKm": 110, "decay": 0.01 },
+    { "name": "Еврофура 20т", "minTariff": 10000, "basePerKm": 250, "minPerKm": 120, "decay": 0.01 },
+    { "name": "Манипулятор 5т", "minTariff": 15000, "basePerKm": 240, "minPerKm": 150, "decay": 0.01 },
+    { "name": "Манипулятор 10т", "minTariff": 20000, "basePerKm": 240, "minPerKm": 150, "decay": 0.01 },
+    { "name": "Манипулятор 15т", "minTariff": 25000, "basePerKm": 240, "minPerKm": 150, "decay": 0.01 }
+  ],
+  "movers": {
+    "standard": {
+      "unloadPerKg": 2.5,
+      "floorPerKg": {
+        "withLift": 3.5,
+        "noLift": [
+          { "maxFloor": 5, "rate": 3 },
+          { "maxFloor": 10, "rate": 4 },
+          { "maxFloor": 20, "rate": 6 },
+          { "maxFloor": 99, "rate": 8 }
+        ]
+      }
+    },
+    "largeFormat": [
+      {
+        "format": "100×200",
+        "liftAllowed": true,
+        "unloadIncluded": true,
+        "withLift": 300,
+        "noLiftPerFloor": 300,
+        "minTotal": 7000
+      },
+      {
+        "format": "100×260",
+        "liftAllowed": true,
+        "unloadIncluded": true,
+        "withLift": 500,
+        "noLiftPerFloor": 500,
+        "minTotal": 12000
+      },
+      {
+        "format": "100×280",
+        "liftAllowed": true,
+        "unloadIncluded": true,
+        "withLift": 500,
+        "noLiftPerFloor": 500,
+        "minTotal": 12000
+      },
+      {
+        "format": "100×290",
+        "liftAllowed": false,
+        "unloadIncluded": true,
+        "withLift": 500,
+        "noLiftPerFloor": 500,
+        "minTotal": 12000
+      },
+      {
+        "format": "100×295",
+        "liftAllowed": false,
+        "unloadIncluded": true,
+        "withLift": 500,
+        "noLiftPerFloor": 500,
+        "minTotal": 12000
+      },
+      {
+        "format": "100×299",
+        "liftAllowed": false,
+        "unloadIncluded": true,
+        "withLift": 500,
+        "noLiftPerFloor": 500,
+        "minTotal": 12000
+      },
+      {
+        "format": "100×300",
+        "liftAllowed": false,
+        "unloadIncluded": true,
+        "withLift": 500,
+        "noLiftPerFloor": 500,
+        "minTotal": 12000
+      },
+      {
+        "format": "120×240",
+        "liftAllowed": false,
+        "unloadIncluded": true,
+        "withLift": 500,
+        "noLiftPerFloor": 500,
+        "minTotal": 12000
+      },
+      {
+        "format": "120×278",
+        "liftAllowed": false,
+        "unloadIncluded": true,
+        "withLift": 550,
+        "noLiftPerFloor": 550,
+        "minTotal": 12000
+      },
+      {
+        "format": "120×280",
+        "liftAllowed": false,
+        "unloadIncluded": true,
+        "withLift": 550,
+        "noLiftPerFloor": 550,
+        "minTotal": 12000
+      },
+      {
+        "format": "120×300",
+        "liftAllowed": false,
+        "unloadIncluded": true,
+        "withLift": 550,
+        "noLiftPerFloor": 550,
+        "minTotal": 12000
+      },
+      {
+        "format": "159×324",
+        "liftAllowed": false,
+        "unloadIncluded": true,
+        "withLift": 700,
+        "noLiftPerFloor": 700,
+        "minTotal": 18000
+      },
+      {
+        "format": "160×320",
+        "liftAllowed": false,
+        "unloadIncluded": true,
+        "withLift": 700,
+        "noLiftPerFloor": 700,
+        "minTotal": 18000
+      },
+      {
+        "format": "162×324",
+        "liftAllowed": false,
+        "unloadIncluded": true,
+        "withLift": 700,
+        "noLiftPerFloor": 700,
+        "minTotal": 18000
+      },
+      {
+        "format": "80×324",
+        "liftAllowed": false,
+        "unloadIncluded": true,
+        "withLift": 500,
+        "noLiftPerFloor": 500,
+        "minTotal": 12000
+      }
+    ]
+  }
+}
