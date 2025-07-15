@@ -132,16 +132,24 @@ function getMoversCost(data) {
     }
   }
 
-  if (standard > 0) {
-    if (isOnlyUnload) {
-      total += standard * 7;
-    } else if (hasLift) {
-      total += standard * 9;
+if (standard > 0) {
+  const unload = standard * 2;
+  let liftCost = 0;
+
+  if (!isOnlyUnload && floor > 1) {
+    if (hasLift) {
+      liftCost = standard * 2 * 1.3;
     } else {
-      const rate = floor <= 5 ? 15 : floor <= 10 ? 20 : floor <= 20 ? 30 : 50;
-      total += standard * rate;
+      liftCost = standard * floor * 3;
     }
+
+    const totalWithLift = unload + liftCost;
+    total += totalWithLift < 6000 ? 6000 : totalWithLift;
+  } else {
+    total += unload; // Только выгрузка — без минималки
   }
+}
+
 
   return total;
 }
