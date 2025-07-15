@@ -120,17 +120,48 @@ function getMoversCost(data) {
   const format = data.large_format || "";
   let total = 0;
 
-  if (large > 0) {
-    const liftAllowed = ["100x200", "100x260", "100x280"].includes(format);
-    if (isOnlyUnload) {
-      total += large * 20;
-    } else if (liftAllowed && hasLift) {
-      total += large * 30;
-    } else {
-      const rate = floor <= 5 ? 50 : floor <= 10 ? 60 : floor <= 20 ? 70 : 90;
-      total += large * rate;
+// Таблица тарифов для крупного формата
+const largeFormats = {
+  "100x200": { canLift: true, rate: 300, min: 7000 },
+  "100x260": { canLift: true, rate: 500, min: 12000 },
+  "100x280": { canLift: true, rate: 500, min: 12000 },
+  "100x290": { canLift: false, rate: 500, min: 12000 },
+  "100x295": { canLift: false, rate: 500, min: 12000 },
+  "100x299": { canLift: false, rate: 500, min: 12000 },
+  "100x300": { canLift: false, rate: 500, min: 12000 },
+  "120x240": { canLift: false, rate: 500, min: 12000 },
+  "120x278": { canLift: false, rate: 550, min: 12000 },
+  "120x280": { canLift: false, rate: 550, min: 12000 },
+  "120x300": { canLift: false, rate: 550, min: 12000 },
+  "159x324": { canLift: false, rate: 700, min: 18000 },
+  "160x320": { canLift: false, rate: 700, min: 18000 },
+  "162x324": { canLift: false, rate: 700, min: 18000 },
+  "80x324":  { canLift: false, rate: 500, min: 12000 },
+};
+
+if (Array.isArray(data.large_sheets)) {
+  let sum = 0;
+  let maxMin = 0;
+
+  for (const item of data.large_sheets) {
+    const f = largeFormats[item.format];
+    const qty = parseInt(item.count) || 0;
+    if (!f || qty === 0) continue;
+
+    // Предупреждение если указано "лифт есть", но формат нельзя
+    if (hasLift && !f.canLift) {
+      console.warn(`⚠️ Формат ${item.format} не влезает в лифт`);
     }
+
+    const liftFactor = isOnlyUnload ? 1 : floor;
+    const cost = qty * f.rate * liftFactor;
+    sum += cost;
+
+    if (f.min > maxMin) maxMin = f.min;
   }
+
+  total += sum < maxMin ? maxMin : sum;
+}
 
 if (standard > 0) {
   const unload = standard * 2;
