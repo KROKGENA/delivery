@@ -88,6 +88,7 @@ function selectVehicle(weight, loadingType) {
   return null;
 }
 
+
 function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
   const kmStep = 0.1;
   let cost = 0;
@@ -122,29 +123,28 @@ function getMoversCost(data) {
   if (large > 0) {
     const liftAllowed = ["100x200", "100x260", "100x280"].includes(format);
     if (isOnlyUnload) {
-      total += large * 10;
+      total += large * 20;
     } else if (liftAllowed && hasLift) {
-      total += large * 15;
+      total += large * 30;
     } else {
-      const rate = floor <= 5 ? 20 : floor <= 10 ? 30 : floor <= 20 ? 40 : 50;
+      const rate = floor <= 5 ? 50 : floor <= 10 ? 60 : floor <= 20 ? 70 : 90;
       total += large * rate;
     }
   }
 
   if (standard > 0) {
     if (isOnlyUnload) {
-      total += standard * 2.5;
+      total += standard * 7;
     } else if (hasLift) {
-      total += standard * 3.5;
+      total += standard * 9;
     } else {
-      const rate = floor <= 5 ? 3 : floor <= 10 ? 4 : floor <= 20 ? 6 : 8;
+      const rate = floor <= 5 ? 15 : floor <= 10 ? 20 : floor <= 20 ? 30 : 50;
       total += standard * rate;
     }
   }
 
   return total;
 }
-
 
 async function calculateDelivery() {
   if (vehicles.length === 0) {
@@ -158,18 +158,15 @@ async function calculateDelivery() {
 
   const data = window.formData;
   const totalWeight = (data.weight_standard || 0) + (data.weight_large || 0);
-  if (totalWeight === 0) {
-    alert("Укажите вес плитки");
-    return;
-  }
-
   const loadingType = data.loading_type || "любая";
-  console.log("📦 Вес общий:", totalWeight, "| Тип загрузки:", loadingType);
+
+  console.log("📦 Вес общий:", totalWeight, "| Тип загрузки:", loadingType); // ← ЭТА СТРОКА
 
   let deliveryCost = 0;
   let moversCost = 0;
   let vehicleName = "";
   let details = "";
+
 
   if (data.underground && parseFloat(data.height_limit) < 2.2) {
     let left = totalWeight;
@@ -231,8 +228,8 @@ async function calculateDelivery() {
     <p><strong>👷 Грузчики:</strong> ${moversCost.toLocaleString()} ₽</p>
     <hr>
     <h3>Итого: ${(deliveryCost + moversCost).toLocaleString()} ₽</h3>
-    <!-- <p><a href="#" onclick="toggleDetails(event)">Показать подробности</a></p> -->
-    <div id="details_block" style="display:none;">
+  <!-- <p><a href="#" onclick="toggleDetails(event)">Показать подробности</a></p> -->
+    <div id="details_block" style="display:none;"> */
       <h3>🚚 Расчёт стоимости доставки</h3>
       <p><strong>Транспорт:</strong> ${vehicleName}</p>
       <p><strong>Общий вес:</strong> ${totalWeight} кг</p>
@@ -245,7 +242,6 @@ async function calculateDelivery() {
 
   document.getElementById("delivery_result").innerHTML = compactHtml;
 }
-
 
 function toggleDetails(e) {
   e.preventDefault();
