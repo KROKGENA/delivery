@@ -109,41 +109,54 @@ function getLoadingSurcharge(vehicle, loadingType) {
 }
 
 function getMoversCost(data) {
-  if (!data.need_movers) return 0;
+  if (!data.need_movers || !window.tariffData || !window.tariffData.movers) return 0;
 
+  const movers = window.tariffData.movers;
   const floor = parseInt(data.floor || 1);
   const hasLift = data.lift === "true";
   const isOnlyUnload = data.only_unload === "true";
-  const standard = data.weight_standard || 0;
-  const large = data.weight_large || 0;
+
+  const standardWeight = data.weight_standard || 0;
+  const largeCount = data.large_count || 0;
   const format = data.large_format || "";
   let total = 0;
 
-  if (large > 0) {
-    const liftAllowed = ["100x200", "100x260", "100x280"].includes(format);
+  // === 🧱 Стандартный формат ===
+  if (standardWeight > 0 && movers.standard) {
+    const unloadRate = movers.standard.unloadPerKg;
+    const floorRates = movers.standard.floorPerKg;
+
     if (isOnlyUnload) {
-      total += large * 10;
-    } else if (liftAllowed && hasLift) {
-      total += large * 15;
+      total += standardWeight * unloadRate;
+    } else if (hasLift) {
+      total += standardWeight * floorRates.withLift;
     } else {
-      const rate = floor <= 5 ? 20 : floor <= 10 ? 30 : floor <= 20 ? 40 : 50;
-      total += large * rate;
+      const rateEntry = floorRates.noLift.find(r => floor <= r.maxFloor);
+      const rate = rateEntry ? rateEntry.rate : floorRates.noLift.slice(-1)[0].rate;
+      total += standardWeight * rate;
     }
   }
 
-  if (standard > 0) {
-    if (isOnlyUnload) {
-      total += standard * 2.5;
-    } else if (hasLift) {
-      total += standard * 3.5;
-    } else {
-      const rate = floor <= 5 ? 3 : floor <= 10 ? 4 : floor <= 20 ? 6 : 8;
-      total += standard * rate;
-    }
+  // === 📐 Крупный формат ===
+  if (largeCount > 0 && movers.large?.formats?.[format]) {
+    const info = movers.large.formats[format];
+
+    const perSheetRate = isOnlyUnload
+      ? info.noLiftPerFloor // = то же самое что и подъем без лифта на 1 этаж
+      : hasLift && info.liftAllowed
+        ? info.withLift
+        : info.noLiftPerFloor * floor;
+
+    let subtotal = largeCount * perSheetRate;
+
+    if (subtotal < info.minTotal) subtotal = info.minTotal;
+
+    total += subtotal;
   }
 
   return total;
 }
+
 
 
 async function calculateDelivery() {
