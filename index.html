@@ -279,26 +279,40 @@
       window.extraDistance = parseFloat(outsideKm);
     }
 
-    function saveFormData() {
-      window.formData = {
-        weight_standard: +document.getElementById('weight_standard').value || 0,
-        weight_large: +document.getElementById('weight_large').value || 0,
-        large_format: document.getElementById('large_format').value,
-        loading_type: document.getElementById('loading_type').value,
-        return_pallets: document.getElementById('return_pallets').checked,
-        underground: document.getElementById('underground').checked,
-        height_limit: document.getElementById('height_limit').value || null,
-        precise_time: document.getElementById('precise_time').checked,
-        delivery_time: document.getElementById('precise_time').checked ? document.getElementById('delivery_time').value : null,
-        need_movers: document.getElementById('need_movers').checked,
-        floor: document.getElementById('floor').value || null,
-        only_unload: document.querySelector('input[name="only_unload"]:checked')?.value,
-        lift: document.querySelector('input[name="lift"]:checked')?.value,
-        deliveryDistance: window.deliveryDistance,
-        extraDistance: window.extraDistance
-      };
-      alert('Параметры сохранены');
+function saveFormData() {
+  const largeSheets = [];
+  const rows = document.querySelectorAll("#large_format_table tbody tr");
+
+  rows.forEach(row => {
+    const format = row.querySelector("select")?.value;
+    const count = row.querySelector("input[type='number']")?.value;
+
+    if (format && count && parseInt(count) > 0) {
+      largeSheets.push({ format, count: parseInt(count) });
     }
+  });
+
+  window.formData = {
+    weight_standard: +document.getElementById('weight_standard').value || 0,
+    weight_large: +document.getElementById('weight_large').value || 0,
+    large_sheets: largeSheets,
+    loading_type: document.getElementById('loading_type').value,
+    return_pallets: document.getElementById('return_pallets').checked,
+    underground: document.getElementById('underground').checked,
+    height_limit: document.getElementById('height_limit').value || null,
+    precise_time: document.getElementById('precise_time').checked,
+    delivery_time: document.getElementById('precise_time').checked ? document.getElementById('delivery_time').value : null,
+    need_movers: document.getElementById('need_movers').checked,
+    floor: document.getElementById('floor').value || null,
+    only_unload: document.querySelector('input[name="only_unload"]:checked')?.value,
+    lift: document.querySelector('input[name="lift"]:checked')?.value,
+    deliveryDistance: window.deliveryDistance,
+    extraDistance: window.extraDistance
+  };
+
+  alert('Параметры сохранены');
+}
+
 
     function clearFormData() {
       window.formData = {};
