@@ -6,7 +6,7 @@
     { "name": "а/м 5т", "minTariff": 5000, "basePerKm": 195, "minPerKm": 75, "decay": 0.01 },
     { "name": "а/м 5т гидролифт", "minTariff": 6000, "basePerKm": 195, "minPerKm": 75, "decay": 0.01 },
     { "name": "а/м 10т", "minTariff": 8000, "basePerKm": 400, "minPerKm": 85, "decay": 0.017 },
-    { "name": "Еврофура 20т", "minTariff": 10000, "basePerKm": 250, "minPerKm": 120, "decay": 0.01 },
+    { "name": "Еврофура 20т", "minTariff": 11000, "basePerKm": 700, "minPerKm": 120, "decay": 0.06 },
     { "name": "Манипулятор 5т", "minTariff": 15000, "basePerKm": 240, "minPerKm": 150, "decay": 0.01 },
     { "name": "Манипулятор 10т", "minTariff": 20000, "basePerKm": 240, "minPerKm": 150, "decay": 0.01 },
     { "name": "Манипулятор 15т", "minTariff": 25000, "basePerKm": 240, "minPerKm": 150, "decay": 0.01 }
