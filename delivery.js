@@ -208,78 +208,7 @@ function getLoadingSurcharge(vehicle, loadingType) {
   return 0;
 }
 
-function getMoversCost(data) {
-  if (!data.need_movers) return 0;
 
-  const floor = parseInt(data.floor || 1);
-  const hasLift = data.lift === "true";
-  const isOnlyUnload = data.only_unload === "true";
-  const standard = data.weight_standard || 0;
-  const large = data.weight_large || 0;
-  const format = data.large_format || "";
-  let total = 0;
-
-  const largeFormats = {
-    "100x200": { canLift: true, rate: 300, min: 7000 },
-    "100x260": { canLift: true, rate: 500, min: 12000 },
-    "100x280": { canLift: true, rate: 500, min: 12000 },
-    "100x290": { canLift: false, rate: 500, min: 12000 },
-    "100x295": { canLift: false, rate: 500, min: 12000 },
-    "100x299": { canLift: false, rate: 500, min: 12000 },
-    "100x300": { canLift: false, rate: 500, min: 12000 },
-    "120x240": { canLift: false, rate: 500, min: 12000 },
-    "120x278": { canLift: false, rate: 550, min: 12000 },
-    "120x280": { canLift: false, rate: 550, min: 12000 },
-    "120x300": { canLift: false, rate: 550, min: 12000 },
-    "159x324": { canLift: false, rate: 700, min: 18000 },
-    "160x320": { canLift: false, rate: 700, min: 18000 },
-    "162x324": { canLift: false, rate: 700, min: 18000 },
-    "80x324":  { canLift: false, rate: 500, min: 12000 },
-  };
-
-  if (Array.isArray(data.large_sheets)) {
-    let sum = 0;
-    let maxMin = 0;
-
-    for (const item of data.large_sheets) {
-      const f = largeFormats[item.format];
-      const qty = parseInt(item.count) || 0;
-      if (!f || qty === 0) continue;
-
-      if (hasLift && !f.canLift) {
-        console.warn(`⚠️ Формат ${item.format} не влезает в лифт`);
-      }
-
-      const liftFactor = isOnlyUnload ? 1 : floor;
-      const cost = qty * f.rate * liftFactor;
-      sum += cost;
-
-      if (f.min > maxMin) maxMin = f.min;
-    }
-
-    total += sum < maxMin ? maxMin : sum;
-  }
-
-  if (standard > 0) {
-    const unload = standard * 3;
-    let liftCost = 0;
-
-    if (!isOnlyUnload && floor > 1) {
-      if (hasLift) {
-        liftCost = standard * 3 * 1.4;
-      } else {
-        liftCost = standard * floor * 4;
-      }
-
-      const totalWithLift = unload + liftCost;
-      total += totalWithLift < 6000 ? 6000 : totalWithLift;
-    } else {
-      total += unload;
-    }
-  }
-
-  return total;
-}
 
 async function calculateDelivery() {
   if (vehicles.length === 0) {
