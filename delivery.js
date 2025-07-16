@@ -166,13 +166,7 @@ function getMoversCost(data) {
     total += sum < maxMin ? maxMin : sum;
   }
 
-- ❗ Минимум: **6000 руб**
 
----
-
-## ✅ Обновим `getMoversCost` для обычной плитки
-
-Вот новая версия (только часть, касающаяся обычной плитки):
 
 if (standard > 0) {
   const unload = standard * 2;
