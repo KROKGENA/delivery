@@ -253,14 +253,14 @@ function getMoversCost(data) {
   }
 
   if (standard > 0) {
-    const unload = standard * 2;
+    const unload = standard * 3;
     let liftCost = 0;
 
     if (!isOnlyUnload && floor > 1) {
       if (hasLift) {
-        liftCost = standard * 2 * 1.3;
+        liftCost = standard * 3 * 1.4;
       } else {
-        liftCost = standard * floor * 3;
+        liftCost = standard * floor * 4;
       }
 
       const totalWithLift = unload + liftCost;
