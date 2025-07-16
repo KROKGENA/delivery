@@ -174,7 +174,7 @@ function getMoversCost(data) {
       if (hasLift) {
         liftCost = standard * 4 * 1.3;
       } else {
-        liftCost = standard * floor * 4;
+        liftCost = standard * floor * 3;
       }
 
       const totalWithLift = unload + liftCost;
