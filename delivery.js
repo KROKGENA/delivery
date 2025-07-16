@@ -166,23 +166,40 @@ function getMoversCost(data) {
     total += sum < maxMin ? maxMin : sum;
   }
 
-  if (standard > 0) {
-    const unload = standard * 2;
-    let liftCost = 0;
+- ❗ Минимум: **6000 руб**
 
-    if (!isOnlyUnload && floor > 1) {
-      if (hasLift) {
-        liftCost = standard * 4 * 1.3;
-      } else {
-        liftCost = standard * floor * 3;
-      }
+---
 
-      const totalWithLift = unload + liftCost;
-      total += totalWithLift < 6000 ? 6000 : totalWithLift;
+## ✅ Обновим `getMoversCost` для обычной плитки
+
+Вот новая версия (только часть, касающаяся обычной плитки):
+
+if (standard > 0) {
+  const unload = standard * 2;
+  let liftCost = 0;
+
+  if (!isOnlyUnload) {
+    const baseLift = standard * 4;
+
+    if (hasLift) {
+      // Лифт есть
+      liftCost = baseLift;
+      const total = unload + liftCost;
+      total += total < 2000 ? 2000 : 0;
+      totalCost += total;
     } else {
-      total += unload;
+      // Лифта нет, подъём вручную с 2 этажа
+      const extraFloors = Math.max(0, floor - 1);
+      liftCost = baseLift + (standard * extraFloors * 2);
+      const total = unload + liftCost;
+      totalCost += total < 6000 ? 6000 : total;
     }
+  } else {
+    // Только выгрузка
+    totalCost += unload;
   }
+}
+
 
   return total;
 }
