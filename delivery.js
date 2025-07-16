@@ -176,27 +176,24 @@ function getMoversCost(data) {
 
 if (standard > 0) {
   const unload = standard * 2;
-  let liftCost = 0;
 
   if (!isOnlyUnload) {
     const baseLift = standard * 4;
 
     if (hasLift) {
       // Лифт есть
-      liftCost = baseLift;
-      const total = unload + liftCost;
-      total += total < 2000 ? 2000 : 0;
-      totalCost += total;
+      const cost = unload + baseLift;
+      total += cost < 2000 ? 2000 : cost;
     } else {
       // Лифта нет, подъём вручную с 2 этажа
       const extraFloors = Math.max(0, floor - 1);
-      liftCost = baseLift + (standard * extraFloors * 2);
-      const total = unload + liftCost;
-      totalCost += total < 6000 ? 6000 : total;
+      const manualLift = standard * extraFloors * 2;
+      const cost = unload + baseLift + manualLift;
+      total += cost < 6000 ? 6000 : cost;
     }
   } else {
     // Только выгрузка
-    totalCost += unload;
+    total += unload;
   }
 }
 
