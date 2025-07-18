@@ -222,6 +222,23 @@
     tbody.appendChild(row);
   }
   </script>
+<script>
+  ymaps.ready(function () {
+    const warehouse = [54.907129, 38.054109]; // координаты склада
+    const myMap = new ymaps.Map("map", {
+      center: warehouse,
+      zoom: 10
+    });
+
+    const warehousePlacemark = new ymaps.Placemark(warehouse, {
+      balloonContent: 'Склад'
+    }, {
+      preset: 'islands#redDotIcon'
+    });
+
+    myMap.geoObjects.add(warehousePlacemark);
+  });
+</script>
 
   <div style="font-size: 12px; color: #999; text-align: center; margin: 30px 0 10px;">
     Калькулятор разработан Геннадием Байковым, Sceramic © 2025
