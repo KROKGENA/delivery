@@ -117,10 +117,11 @@
 <body>
   <h1>Калькулятор доставки</h1>
 
+  <div id="map" style="width: 100%; height: 400px; margin-top: 20px;"></div>
+
   <label>Или введите адрес:
     <input type="text" id="address" placeholder="г. Подольск, ул. Ленина 10">
   </label>
-<div id="map" style="width: 100%; height: 400px; margin-top: 20px;"></div>
 
   <form id="deliveryForm">
     <fieldset>
@@ -222,23 +223,24 @@
     tbody.appendChild(row);
   }
   </script>
-<script>
-  ymaps.ready(function () {
-    const warehouse = [54.907129, 38.054109]; // координаты склада
-    const myMap = new ymaps.Map("map", {
-      center: warehouse,
-      zoom: 10
-    });
 
-    const warehousePlacemark = new ymaps.Placemark(warehouse, {
-      balloonContent: 'Склад'
-    }, {
-      preset: 'islands#redDotIcon'
-    });
+  <script>
+    ymaps.ready(function () {
+      const warehouse = [54.907129, 38.054109];
+      const myMap = new ymaps.Map("map", {
+        center: warehouse,
+        zoom: 10
+      });
 
-    myMap.geoObjects.add(warehousePlacemark);
-  });
-</script>
+      const placemark = new ymaps.Placemark(warehouse, {
+        balloonContent: 'Склад'
+      }, {
+        preset: 'islands#redDotIcon'
+      });
+
+      myMap.geoObjects.add(placemark);
+    });
+  </script>
 
   <div style="font-size: 12px; color: #999; text-align: center; margin: 30px 0 10px;">
     Калькулятор разработан Геннадием Байковым, Sceramic © 2025
