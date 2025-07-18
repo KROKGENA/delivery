@@ -1,144 +1,123 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <head>
-  <!-- Yandex.Metrika counter -->
-  <script type="text/javascript" >
-     (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-     m[i].l=1*new Date();
-     for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-     k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-     (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+  <meta charset="UTF-8">
+  <title>Калькулятор доставки плитки</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-     ym(103356051, "init", {
-          clickmap:true,
-          trackLinks:true,
-          accurateTrackBounce:true,
-          webvisor:true
-     });
+  <!-- Yandex.Metrika counter -->
+  <script type="text/javascript">
+    (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+    m[i].l=1*new Date();
+    for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+    (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+    ym(103356051, "init", {
+         clickmap:true,
+         trackLinks:true,
+         accurateTrackBounce:true,
+         webvisor:true
+    });
   </script>
   <noscript><div><img src="https://mc.yandex.ru/watch/103356051" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
   <!-- /Yandex.Metrika counter -->
 
-  <meta charset="UTF-8">
-  <title>Калькулятор доставки плитки</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #fff;
-    color: #333;
-    margin: 20px;
-    line-height: 1.6;
-  }
-
-  h1 {
-    color: #1e2d7d;
-    font-size: 28px;
-    margin-bottom: 20px;
-  }
-
-  fieldset {
-    border: 1px solid #ccc;
-    padding: 20px;
-    border-radius: 8px;
-    background: #f9f9f9;
-    max-width: 700px;
-    margin-bottom: 20px;
-  }
-
-  label {
-    display: block;
-    margin: 12px 0 6px;
-    font-weight: 600;
-  }
-
-  input[type="number"],
-  input[type="text"],
-  input[type="time"],
-  select {
-    padding: 8px;
-    font-size: 15px;
-    width: 100%;
-    max-width: 400px;
-    box-sizing: border-box;
-    margin-bottom: 12px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-  }
-
-  input[type="checkbox"],
-  input[type="radio"] {
-    margin-right: 6px;
-  }
-
-  button {
-    background: #1e2d7d;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 16px;
-    font-size: 15px;
-    cursor: pointer;
-    margin: 6px 6px 6px 0;
-    transition: background 0.2s ease-in-out;
-  }
-
-  button:hover {
-    background: #0e1a5d;
-  }
-
-  .button-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 10px;
-  }
-
-  #delivery_result {
-    padding: 15px;
-    background: #eef3ff;
-    border-left: 5px solid #1e2d7d;
-    margin-top: 20px;
-    border-radius: 6px;
-    max-width: 700px;
-  }
-
-  #map {
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    margin-top: 20px;
-  }
-
-  @media (max-width: 600px) {
-    fieldset, #delivery_result {
-      padding: 15px;
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #fff;
+      color: #333;
+      margin: 20px;
+      line-height: 1.6;
     }
-
-    button {
+    h1 {
+      color: #1e2d7d;
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+    fieldset {
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 8px;
+      background: #f9f9f9;
+      max-width: 700px;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+    }
+    input[type="number"],
+    input[type="text"],
+    input[type="time"],
+    select {
+      padding: 8px;
+      font-size: 15px;
       width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
-
+    input[type="checkbox"],
+    input[type="radio"] {
+      margin-right: 6px;
+    }
+    button {
+      background: #1e2d7d;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      margin: 6px 6px 6px 0;
+      transition: background 0.2s ease-in-out;
+    }
+    button:hover {
+      background: #0e1a5d;
+    }
     .button-group {
-      flex-direction: column;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
     }
-  }
-</style>
-<!-- Dadata -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/js/jquery.suggestions.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" />
+    #delivery_result {
+      padding: 15px;
+      background: #eef3ff;
+      border-left: 5px solid #1e2d7d;
+      margin-top: 20px;
+      border-radius: 6px;
+      max-width: 700px;
+    }
+    @media (max-width: 600px) {
+      fieldset, #delivery_result {
+        padding: 15px;
+      }
+      button {
+        width: 100%;
+      }
+      .button-group {
+        flex-direction: column;
+      }
+    }
+  </style>
 
+  <!-- Dadata -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/js/jquery.suggestions.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" />
 </head>
 <body>
   <h1>Калькулятор доставки</h1>
 
   <label>Или введите адрес:
     <input type="text" id="address" placeholder="г. Подольск, ул. Ленина 10">
-  <!-- <button type="button" onclick="geocodeAddress()">Найти</button> -->
   </label>
 
   <form id="deliveryForm">
@@ -151,29 +130,25 @@
       <label>Вес крупной плитки (кг):</label>
       <input type="number" id="weight_large" min="0" step="1" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'inline' : 'none';">
 
-
-    <div id="large_format_block" style="display:none;">
-  <label>Крупный формат плитки (укажите для каждого формата и количество листов):</label>
-  <table id="large_format_table">
-    <thead>
-      <tr><th>Формат</th><th>Кол-во листов</th><th></th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <button type="button" onclick="addLargeFormatRow()">➕ Добавить формат</button>
-</div>
-
+      <div id="large_format_block" style="display:none;">
+        <label>Крупный формат плитки (укажите для каждого формата и количество листов):</label>
+        <table id="large_format_table">
+          <thead>
+            <tr><th>Формат</th><th>Кол-во листов</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" onclick="addLargeFormatRow()">➕ Добавить формат</button>
+      </div>
 
       <label>Тип загрузки:</label>
- <select id="loading_type">
-  <option value="любая">Любая</option>
-  <option value="верхняя">Верхняя</option>
-  <option value="боковая">Боковая</option>
-  <option value="гидролифт">Гидролифт</option>
-  <option value="manipulator">Манипулятор</option>
-</select>
-
-
+      <select id="loading_type">
+        <option value="любая">Любая</option>
+        <option value="верхняя">Верхняя</option>
+        <option value="боковая">Боковая</option>
+        <option value="гидролифт">Гидролифт</option>
+        <option value="manipulator">Манипулятор</option>
+      </select>
 
       <label><input type="checkbox" id="return_pallets"> Возврат тары</label>
       <label><input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';"> Подземный паркинг</label>
@@ -199,225 +174,56 @@
         <label><input type="radio" name="lift" value="false" checked> Нет лифта</label>
       </div>
     </fieldset>
- <!-- <button type="button" onclick="openAdminPanel()">⚙️ Админка тарифов</button> -->
+
     <button type="button" onclick="saveFormData()">Сохранить параметры</button>
     <button type="button" onclick="clearFormData()">Сбросить всё</button>
     <button type="button" onclick="(async () => await calculateDelivery())()">Рассчитать стоимость</button>
- <!-- <button type="button" onclick="viewSavedParams()">Посмотреть параметры</button> -->
-
   </form>
 
-  <!--Вывод расчётов -->
   <div id="delivery_result" style="margin-top: 20px;"></div>
   <div id="movers_result"></div>
   <div id="total_result" style="font-weight: bold; margin-top: 10px;"></div>
 
-  <div id="map" style="height: 400px; margin-top:20px;"></div>
-
-  <!-- Leaflet -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.min.js"></script>
-
-  <!-- Логика карты и формы -->
   <script>
-    const warehouse = [54.907129, 38.054109];
-    const map = L.map('map').setView(warehouse, 10);
-    let clientMarker, routeControl;
+  function addLargeFormatRow() {
+    const tbody = document.querySelector("#large_format_table tbody");
+    const row = document.createElement("tr");
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    L.marker(warehouse).addTo(map).bindPopup("Склад").openPopup();
- //   L.circle(warehouse, { radius: 40000, color: 'green', fillOpacity: 0.1 }).addTo(map);
-
-    map.on('click', function(e) {
-      const lat = e.latlng.lat;
-      const lon = e.latlng.lng;
-      if (clientMarker) map.removeLayer(clientMarker);
-      clientMarker = L.marker([lat, lon]).addTo(map).bindPopup("Клиент").openPopup();
-      reverseGeocode(lat, lon);
-      drawRoute(lat, lon);
-      const distance = calculateDistance(warehouse[0], warehouse[1], lat, lon);
-      showResult(distance);
+    const formatCell = document.createElement("td");
+    const select = document.createElement("select");
+    const formats = ["", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300", "120x240", "120x278", "120x280", "120x300", "159x324", "160x320", "162x324", "80x324"];
+    formats.forEach(f => {
+      const option = document.createElement("option");
+      option.value = f;
+      option.textContent = f || "Выберите";
+      select.appendChild(option);
     });
+    formatCell.appendChild(select);
 
-    function geocodeAddress() {
-      const query = document.getElementById('address').value;
-      if (!query) return;
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.length > 0) {
-            const lat = parseFloat(data[0].lat);
-            const lon = parseFloat(data[0].lon);
-            if (clientMarker) map.removeLayer(clientMarker);
-            clientMarker = L.marker([lat, lon]).addTo(map).bindPopup("Клиент").openPopup();
-            map.setView([lat, lon], 12);
-            drawRoute(lat, lon);
-            const distance = calculateDistance(warehouse[0], warehouse[1], lat, lon);
-            showResult(distance);
-          } else {
-            alert('Адрес не найден');
-          }
-        });
-    }
+    const qtyCell = document.createElement("td");
+    const qtyInput = document.createElement("input");
+    qtyInput.type = "number";
+    qtyInput.min = "1";
+    qtyInput.style.width = "60px";
+    qtyCell.appendChild(qtyInput);
 
-    function drawRoute(destLat, destLon) {
-      if (routeControl) map.removeControl(routeControl);
-      routeControl = L.Routing.control({
-        waypoints: [L.latLng(warehouse[0], warehouse[1]), L.latLng(destLat, destLon)],
-        routeWhileDragging: false,
-        draggableWaypoints: false,
-        addWaypoints: false,
-        createMarker: () => null
-      }).addTo(map);
-    }
+    const deleteCell = document.createElement("td");
+    const btn = document.createElement("button");
+    btn.textContent = "✖";
+    btn.type = "button";
+    btn.onclick = () => row.remove();
+    deleteCell.appendChild(btn);
 
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) *
-                Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
-
-    function reverseGeocode(lat, lon) {
-      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.display_name) {
-            document.getElementById('address').value = data.display_name;
-          }
-        });
-    }
-
-    function showResult(distance) {
-      const inside = distance <= 40;
-      const outsideKm = inside ? 0 : (distance - 40).toFixed(2);
-      window.deliveryDistance = parseFloat(distance.toFixed(2));
-      window.extraDistance = parseFloat(outsideKm);
-    }
-
-function saveFormData() {
-  const largeSheets = [];
-  const rows = document.querySelectorAll("#large_format_table tbody tr");
-
-  rows.forEach(row => {
-    const format = row.querySelector("select")?.value;
-    const count = row.querySelector("input[type='number']")?.value;
-
-    if (format && count && parseInt(count) > 0) {
-      largeSheets.push({ format, count: parseInt(count) });
-    }
-  });
-
-  window.formData = {
-    weight_standard: +document.getElementById('weight_standard').value || 0,
-    weight_large: +document.getElementById('weight_large').value || 0,
-    large_sheets: largeSheets,
-    loading_type: document.getElementById('loading_type').value,
-    return_pallets: document.getElementById('return_pallets').checked,
-    underground: document.getElementById('underground').checked,
-    height_limit: document.getElementById('height_limit').value || null,
-    precise_time: document.getElementById('precise_time').checked,
-    delivery_time: document.getElementById('precise_time').checked ? document.getElementById('delivery_time').value : null,
-    need_movers: document.getElementById('need_movers').checked,
-    floor: document.getElementById('floor').value || null,
-    only_unload: document.querySelector('input[name="only_unload"]:checked')?.value,
-    lift: document.querySelector('input[name="lift"]:checked')?.value,
-    deliveryDistance: window.deliveryDistance,
-    extraDistance: window.extraDistance
-  };
-
-  alert('Параметры сохранены');
-}
-
-
-    function clearFormData() {
-      window.formData = {};
-      document.getElementById('deliveryForm').reset();
-      document.getElementById('large_format_block').style.display = 'none';
-      document.getElementById('height_block').style.display = 'none';
-      document.getElementById('movers_block').style.display = 'none';
-      document.getElementById('time_block').style.display = 'none';
-      document.getElementById("delivery_result").innerHTML = '';
-      document.getElementById("movers_result").innerHTML = '';
-      document.getElementById("total_result").innerHTML = '';
-    }
-
-    function viewSavedParams() {
-      if (!window.formData) return alert('Нет сохранённых параметров');
-      alert(JSON.stringify(window.formData, null, 2));
-    }
+    row.appendChild(formatCell);
+    row.appendChild(qtyCell);
+    row.appendChild(deleteCell);
+    tbody.appendChild(row);
+  }
   </script>
 
-  <!-- Delivery logic -->
-  <script src="delivery.js"></script>
-  <script>
-  $("#address").suggestions({
-    token: "53d32f43f22df54e47727e3ba091627532e7cda5",
-    type: "ADDRESS",
-    onSelect: function(suggestion) {
-      const lat = suggestion.data.geo_lat;
-      const lon = suggestion.data.geo_lon;
-
-      if (lat && lon) {
-        if (clientMarker) map.removeLayer(clientMarker);
-        clientMarker = L.marker([lat, lon]).addTo(map).bindPopup("Клиент").openPopup();
-        map.setView([lat, lon], 12);
-        drawRoute(lat, lon);
-        const distance = calculateDistance(warehouse[0], warehouse[1], lat, lon);
-        showResult(distance);
-      } else {
-        alert("У выбранного адреса нет координат.");
-      }
-    }
-  });
-</script>
-  <script>
-function addLargeFormatRow() {
-  const tbody = document.querySelector("#large_format_table tbody");
-  const row = document.createElement("tr");
-
-  const formatCell = document.createElement("td");
-  const select = document.createElement("select");
-  const formats = [
-    "", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299",
-    "100x300", "120x240", "120x278", "120x280", "120x300", "159x324",
-    "160x320", "162x324", "80x324"
-  ];
-  formats.forEach(f => {
-    const option = document.createElement("option");
-    option.value = f;
-    option.textContent = f || "Выберите";
-    select.appendChild(option);
-  });
-  formatCell.appendChild(select);
-
-  const qtyCell = document.createElement("td");
-  const qtyInput = document.createElement("input");
-  qtyInput.type = "number";
-  qtyInput.min = "1";
-  qtyInput.style.width = "60px";
-  qtyCell.appendChild(qtyInput);
-
-  const deleteCell = document.createElement("td");
-  const btn = document.createElement("button");
-  btn.textContent = "✖";
-  btn.type = "button";
-  btn.onclick = () => row.remove();
-  deleteCell.appendChild(btn);
-
-  row.appendChild(formatCell);
-  row.appendChild(qtyCell);
-  row.appendChild(deleteCell);
-  tbody.appendChild(row);
-}
-</script>
-
-<div style="font-size: 12px; color: #999; text-align: center; margin: 30px 0 10px;">
-  Калькулятор разработан Геннадием Байковым, Sceramic © 2025
-</div>
+  <div style="font-size: 12px; color: #999; text-align: center; margin: 30px 0 10px;">
+    Калькулятор разработан Геннадием Байковым, Sceramic © 2025
+  </div>
 
 </body>
 </html>
