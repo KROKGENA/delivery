@@ -132,7 +132,7 @@
 
   <button type="button" onclick="saveFormData()">Сохранить параметры</button>
   <button type="button" onclick="calculateDelivery()">Рассчитать стоимость</button>
-
+  <button type="button" onclick="openAdminPanel()">Админка</button>
 </form>
 
 <div id="delivery_result"></div>
@@ -211,7 +211,13 @@
       need_movers: document.getElementById("need_movers").checked,
       only_unload: document.querySelector("input[name='only_unload']:checked").value,
       floor: document.getElementById("floor").value,
-      lift: document.querySelector("input[name='lift']:checked").value
+      lift: document.querySelector("input[name='lift']:checked").value,
+      large_sheets: Array.from(document.querySelectorAll("#large_format_table tbody tr")).map(row => {
+        return {
+          format: row.querySelector("select").value,
+          count: row.querySelector("input").value
+        };
+      })
     };
     alert("Параметры сохранены!");
   }
@@ -222,12 +228,9 @@
 
     const formatCell = document.createElement("td");
     const select = document.createElement("select");
-    const formats = [
-  "", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300",
-  "120x240", "120x278", "120x280", "120x300",
-  "159x324", "160x320", "162x324", "80x324"
-];
-
+    const formats = ["", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300",
+                     "120x240", "120x278", "120x280", "120x300",
+                     "159x324", "160x320", "162x324", "80x324"];
     formats.forEach(f => {
       const option = document.createElement("option");
       option.value = f;
@@ -255,23 +258,9 @@
     row.appendChild(deleteCell);
     tbody.appendChild(row);
   }
-
-  async function calculateDelivery() {
-    if (!formData.deliveryDistance) {
-      alert("Выберите адрес или точку на карте");
-      return;
-    }
-
-    const baseCost = Math.round(2500 + formData.deliveryDistance * 60);
-    document.getElementById("delivery_result").innerHTML = `
-      <h3>Расчёт доставки</h3>
-      <p>Расстояние: ${formData.deliveryDistance.toFixed(2)} км</p>
-      <p>Стоимость: <strong>${baseCost.toLocaleString()} ₽</strong></p>
-    `;
-  }
 </script>
 
-<!-- Подключаем внешний JS -->
+<!-- Подключаем основной файл с логикой -->
 <script src="delivery.js"></script>
 
 </body>
