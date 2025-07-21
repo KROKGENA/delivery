@@ -6,7 +6,219 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Yandex.Maps -->
-  <script src="https://api-maps.yandex.ru/2.1/?apikey=a181d434-9dec-492b-8838-73ec5df31ebb&lang=ru_RU">function addLargeFormatRow() {
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=a181d434-9dec-492b-8838-73ec5df31ebb&lang=ru_RU"></script>
+
+  <!-- Dadata -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/js/jquery.suggestions.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" />
+
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .main-container {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      flex-direction: row;
+    }
+
+    .form-section {
+      flex: 1 1 400px;
+      max-width: 600px;
+    }
+
+    .map-section {
+      flex: 1 1 400px;
+      min-width: 300px;
+    }
+
+    input, select, button {
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      min-height: 400px;
+      border-radius: 8px;
+    }
+
+    fieldset {
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 10px;
+      background: #f9f9f9;
+      margin-top: 20px;
+    }
+
+    button {
+      background: linear-gradient(145deg, #2036c4, #1b2d9a);
+      color: white;
+      font-size: 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 6px 6px 6px 0;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #0e1a5d;
+    }
+
+    #delivery_result {
+      margin-top: 20px;
+      padding: 15px;
+      border-left: 5px solid #1e2d7d;
+      background: #eef3ff;
+      border-radius: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+
+    @media (max-width: 768px) {
+      .main-container {
+        flex-direction: column;
+      }
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0;
+      font-weight: normal;
+      cursor: pointer;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .checkbox-label input[type="checkbox"] {
+      transform: scale(1.2);
+      cursor: pointer;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Калькулятор доставки плитки</h1>
+
+<div class="main-container">
+  <div class="form-section">
+    <label for="address">Введите адрес или кликните на карте:</label>
+    <input type="text" id="address" placeholder="например, г. Москва, ул. Ленина 10">
+
+    <form id="deliveryForm">
+      <fieldset>
+        <legend>Параметры доставки</legend>
+
+        <label>Вес стандартной плитки (кг):</label>
+        <input type="number" id="weight_standard" min="0" step="1">
+
+        <label>Вес крупной плитки (кг):</label>
+        <input type="number" id="weight_large" min="0" step="1" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'block' : 'none';">
+
+        <div id="large_format_block" style="display:none;">
+          <label>Крупный формат плитки:</label>
+          <table id="large_format_table">
+            <thead>
+              <tr><th>Формат</th><th>Кол-во листов</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <button type="button" onclick="addLargeFormatRow()">➕ Добавить формат</button>
+        </div>
+
+        <label>Тип загрузки:</label>
+        <select id="loading_type">
+          <option value="любая">Любая</option>
+          <option value="верхняя">Верхняя</option>
+          <option value="боковая">Боковая</option>
+          <option value="гидролифт">Гидролифт</option>
+          <option value="manipulator">Манипулятор</option>
+        </select>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="return_pallets">Возврат тары
+        </label>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';">Подземный паркинг
+        </label>
+
+        <div id="height_block" style="display:none; margin-left: 20px;">
+          <label>Ограничение по высоте (м):</label>
+          <input type="number" id="height_limit" min="1" step="0.1" placeholder="например, 2.2">
+        </div>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="precise_time" onchange="document.getElementById('time_block').style.display = this.checked ? 'block' : 'none';">Доставка к точному времени
+        </label>
+
+        <div id="time_block" style="display:none; margin-left: 20px;">
+          <label>Время:</label>
+          <input type="time" id="delivery_time">
+        </div>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';">Нужны грузчики
+        </label>
+
+        <div id="movers_block" style="display:none; margin-left: 20px;">
+          <label><input type="radio" name="only_unload" value="true" checked> Только выгрузка</label>
+          <label><input type="radio" name="only_unload" value="false"> Выгрузка и подъём</label><br>
+          Этаж: <input type="number" id="floor" min="1"><br>
+          <label><input type="radio" name="lift" value="true"> Есть лифт</label>
+          <label><input type="radio" name="lift" value="false" checked> Нет лифта</label>
+        </div>
+      </fieldset>
+
+      <button type="button" onclick="saveFormData()">Сохранить параметры</button>
+      <button type="button" onclick="calculateDelivery()">Рассчитать стоимость</button>
+      <button type="button" onclick="openAdminPanel()">⚙️ Админка тарифов</button>
+    </form>
+
+    <div id="delivery_result"></div>
+  </div>
+
+  <div class="map-section">
+    <div id="map"></div>
+  </div>
+</div>
+
+<script src="delivery.js"></script>
+<script>
+function addLargeFormatRow() {
   const tbody = document.querySelector("#large_format_table tbody");
   const row = document.createElement("tr");
 
@@ -45,284 +257,6 @@
   tbody.appendChild(row);
 }
 </script>
-
-  <!-- Dadata -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/js/jquery.suggestions.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" />
-
-  <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      margin: 20px;
-      color: #333;
-    }
-
-    h1 {
-      text-align: center;
-    }
-
-    .main-container {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    .form-section {
-      flex: 1 1 400px;
-      max-width: 600px;
-    }
-
-    .map-section {
-      flex: 1 1 400px;
-      min-width: 300px;
-    }
-
-    input, select, button {
-      padding: 10px;
-      font-size: 16px;
-      width: 100%;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
-
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-    }
-
-    .checkbox-label, .radio-label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 6px 0;
-      cursor: pointer;
-    }
-
-    input[type="checkbox"], input[type="radio"] {
-      transform: scale(1.2);
-      cursor: pointer;
-    }
-
-    #map {
-      width: 100%;
-      height: 400px;
-      border-radius: 8px;
-    }
-
-    fieldset {
-      border: 1px solid #ccc;
-      padding: 20px;
-      border-radius: 10px;
-      background: #f9f9f9;
-      margin-top: 20px;
-    }
-
-    button {
-      background: linear-gradient(145deg, #2036c4, #1b2d9a);
-      color: white;
-      padding: 10px 18px;
-      font-size: 15px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    button:hover {
-      background: #0e1a5d;
-    }
-
-    #delivery_result {
-      margin-top: 20px;
-      padding: 15px;
-      border-left: 5px solid #1e2d7d;
-      background: #eef3ff;
-      border-radius: 6px;
-    }
-
-    @media (max-width: 768px) {
-      .main-container {
-        flex-direction: column;
-      }
-    }
-  </style>
-</head>
-<body>
-
-<h1>Калькулятор доставки плитки</h1>
-
-<div class="main-container">
-  <div class="form-section">
-    <label for="address">Введите адрес или кликните на карте:</label>
-    <input type="text" id="address" placeholder="например, г. Москва, ул. Ленина 10">
-
-    <form id="deliveryForm">
-      <fieldset>
-        <legend>Параметры доставки</legend>
-
-        <label for="weight_standard">Вес стандартной плитки (кг):</label>
-        <input type="number" id="weight_standard" min="0" step="1">
-
-        <label for="weight_large">Вес крупной плитки (кг):</label>
-        <input type="number" id="weight_large" min="0" step="1" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'block' : 'none';">
-
-        <div id="large_format_block" style="display:none;">
-          <label>Крупный формат плитки:</label>
-          <table id="large_format_table">
-            <thead>
-              <tr><th>Формат</th><th>Кол-во листов</th><th></th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          <button type="button" onclick="addLargeFormatRow()">➕ Добавить формат</button>
-        </div>
-
-        <label for="loading_type">Тип загрузки:</label>
-        <select id="loading_type">
-          <option value="любая">Любая</option>
-          <option value="верхняя">Верхняя</option>
-          <option value="боковая">Боковая</option>
-          <option value="гидролифт">Гидролифт</option>
-          <option value="manipulator">Манипулятор</option>
-        </select>
-
-        <label class="checkbox-label">
-          <input type="checkbox" id="return_pallets"> Возврат тары
-        </label>
-
-        <label class="checkbox-label">
-          <input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';"> Подземный паркинг
-        </label>
-
-        <div id="height_block" style="display:none; margin-left: 20px;">
-          <label for="height_limit">Ограничение по высоте (м):</label>
-          <input type="number" id="height_limit" min="1" step="0.1">
-        </div>
-
-        <label class="checkbox-label">
-          <input type="checkbox" id="precise_time" onchange="document.getElementById('time_block').style.display = this.checked ? 'block' : 'none';"> Доставка к точному времени
-        </label>
-
-        <div id="time_block" style="display:none; margin-left: 20px;">
-          <label for="delivery_time">Время:</label>
-          <input type="time" id="delivery_time">
-        </div>
-
-        <label class="checkbox-label">
-          <input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';"> Нужны грузчики
-        </label>
-
-        <div id="movers_block" style="display:none; margin-left: 20px;">
-          <label class="radio-label"><input type="radio" name="only_unload" value="true" checked> Только выгрузка</label>
-          <label class="radio-label"><input type="radio" name="only_unload" value="false"> Выгрузка и подъём</label>
-
-          <label for="floor">Этаж:</label>
-          <input type="number" id="floor" min="1">
-
-          <label class="radio-label"><input type="radio" name="lift" value="true"> Есть лифт</label>
-          <label class="radio-label"><input type="radio" name="lift" value="false" checked> Нет лифта</label>
-        </div>
-      </fieldset>
-
-      <button type="button" onclick="validateAndSave()">Сохранить параметры</button>
-      <button type="button" onclick="validateAndCalculate()">Рассчитать стоимость</button>
-      <button type="button" onclick="openAdminPanel()">⚙️ Админка тарифов</button>
-    </form>
-
-    <div id="delivery_result"></div>
-  </div>
-
-  <div class="map-section">
-    <div id="map"></div>
-  </div>
-</div>
-
-<script>
-  const warehouse = [54.907129, 38.054109];
-  let clientPlacemark = null;
-  let routeLine = null;
-
-  ymaps.ready(() => {
-    const map = new ymaps.Map("map", {
-      center: warehouse,
-      zoom: 9,
-      controls: []
-    });
-
-    const warehousePlacemark = new ymaps.Placemark(warehouse, {
-      balloonContent: "Склад"
-    }, {
-      preset: "islands#redIcon",
-      iconCaption: "Склад"
-    });
-    map.geoObjects.add(warehousePlacemark);
-
-    map.events.add("click", e => {
-      const coords = e.get("coords");
-      setClientPoint(coords);
-    });
-
-    $("#address").suggestions({
-      token: "53d32f43f22df54e47727e3ba091627532e7cda5",
-      type: "ADDRESS",
-      onSelect: function (suggestion) {
-        ymaps.geocode(suggestion.value).then(res => {
-          const coords = res.geoObjects.get(0).geometry.getCoordinates();
-          setClientPoint(coords);
-          map.setCenter(coords, 12);
-        });
-      }
-    });
-
-    function setClientPoint(coords) {
-      if (clientPlacemark) map.geoObjects.remove(clientPlacemark);
-      if (routeLine) map.geoObjects.remove(routeLine);
-
-      clientPlacemark = new ymaps.Placemark(coords, {
-        balloonContent: "Клиент"
-      }, {
-        preset: "islands#greenIcon",
-        iconCaption: "Клиент"
-      });
-      map.geoObjects.add(clientPlacemark);
-
-      ymaps.route([warehouse, coords], { routingMode: "auto" }).then(route => {
-        routeLine = route;
-        map.geoObjects.add(routeLine);
-        const distanceKm = route.getLength() / 1000;
-        window.deliveryDistance = distanceKm;
-      }, () => {
-        alert("Не удалось построить маршрут");
-      });
-    }
-  });
-
-  function validateAndSave() {
-    const standard = parseInt(document.getElementById("weight_standard").value) || 0;
-    const large = parseInt(document.getElementById("weight_large").value) || 0;
-    if (standard === 0 && large === 0) {
-      alert("Введите вес стандартной или крупной плитки");
-      return;
-    }
-    saveFormData();
-  }
-
-  function validateAndCalculate() {
-    const standard = parseInt(document.getElementById("weight_standard").value) || 0;
-    const large = parseInt(document.getElementById("weight_large").value) || 0;
-    if (standard === 0 && large === 0) {
-      alert("Введите вес стандартной или крупной плитки");
-      return;
-    }
-    calculateDelivery();
-  }
-</script>
-
-<script src="delivery.js"></script>
 
 <footer style="margin-top:40px; font-size: 11px; color: rgba(0,0,0,0.3); text-align: center;">
   Разработано Геннадием Байковым, ООО «СервисКерамика» <a href="https://sceramic.ru" style="color: rgba(0,0,0,0.3); text-decoration: none;">sceramic.ru</a>
