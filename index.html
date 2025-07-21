@@ -137,7 +137,15 @@
 
 <div id="delivery_result"></div>
 
+<!-- delivery.js: подключаем логику -->
+<script src="delivery.js"></script>
+
+<!-- автоинициализация при загрузке страницы -->
 <script>
+  window.onload = () => {
+    loadTariffs(); // загружаем тарифы
+  };
+
   const warehouse = [54.907129, 38.054109];
   let clientPlacemark = null;
   let routeLine = null;
@@ -259,9 +267,6 @@
     tbody.appendChild(row);
   }
 </script>
-
-<!-- Подключаем основной файл с логикой -->
-<script src="delivery.js"></script>
 
 </body>
 </html>
