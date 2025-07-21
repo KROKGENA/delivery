@@ -14,17 +14,18 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" />
 
   <style>
-    body { font-family: sans-serif; margin: 20px; }
-    input, select { padding: 6px; margin: 6px 0; width: 100%; max-width: 400px; }
+    body { font-family: sans-serif; margin: 20px; color: #333; }
+    input, select { padding: 6px; margin: 4px 0; width: 100%; max-width: 400px; }
     button { margin-top: 10px; padding: 10px 16px; cursor: pointer; }
     fieldset { margin-top: 20px; padding: 10px; background: #f5f5f5; border-radius: 6px; }
     #map { width: 100%; height: 400px; margin-top: 10px; }
-    #delivery_result { margin-top: 20px; padding: 10px; background: #eef; border-left: 4px solid #00f; }
+    #delivery_result { margin-top: 20px; padding: 10px; background: #eef; border-left: 4px solid #00f; border-radius: 6px; }
+    table td { padding: 4px; }
   </style>
 </head>
 <body>
 
-<h1>Калькулятор доставки плитки</h1>
+<h1>🚛 Калькулятор доставки плитки</h1>
 
 <label>Адрес доставки:</label>
 <input type="text" id="address" placeholder="г. Москва, ул. Ленина 10" />
@@ -32,7 +33,7 @@
 
 <form id="deliveryForm">
   <fieldset>
-    <legend>Параметры доставки</legend>
+    <legend>Параметры</legend>
 
     <label>Вес стандартной плитки (кг):</label>
     <input type="number" id="weight_standard" />
@@ -41,7 +42,7 @@
     <input type="number" id="weight_large" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'block' : 'none';" />
 
     <div id="large_format_block" style="display:none;">
-      <label>Крупноформат:</label>
+      <label>Крупноформатные листы:</label>
       <table id="large_format_table">
         <thead><tr><th>Формат</th><th>Кол-во</th><th></th></tr></thead>
         <tbody></tbody>
@@ -58,54 +59,48 @@
       <option value="manipulator">Манипулятор</option>
     </select>
 
-    <label><input type="checkbox" id="return_pallets" /> Возврат тары</label>
-    <label><input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';" /> Подземный паркинг</label>
+    <label><input type="checkbox" id="return_pallets" /> Возврат тары</label><br>
+    <label><input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';" /> Подземный паркинг</label><br>
     <div id="height_block" style="display:none;">
       <label>Ограничение по высоте (м):</label>
       <input type="number" id="height_limit" min="1" step="0.1" />
     </div>
 
-    <label><input type="checkbox" id="precise_time" onchange="document.getElementById('time_block').style.display = this.checked ? 'block' : 'none';" /> Доставка к точному времени</label>
+    <label><input type="checkbox" id="precise_time" onchange="document.getElementById('time_block').style.display = this.checked ? 'block' : 'none';" /> Доставка к точному времени</label><br>
     <div id="time_block" style="display:none;">
       <label>Время:</label>
       <input type="time" id="delivery_time" />
     </div>
 
-    <label><input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';" /> Нужны грузчики</label>
+    <label><input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';" /> Нужны грузчики</label><br>
     <div id="movers_block" style="display:none;">
       <label><input type="radio" name="only_unload" value="true" checked /> Только выгрузка</label>
-      <label><input type="radio" name="only_unload" value="false" /> С подъёмом</label>
-      <label>Этаж:</label> <input type="number" id="floor" min="1" />
+      <label><input type="radio" name="only_unload" value="false" /> Выгрузка и подъем</label><br>
+      <label>Этаж:</label> <input type="number" id="floor" value="1" /><br>
       <label><input type="radio" name="lift" value="true" /> Есть лифт</label>
       <label><input type="radio" name="lift" value="false" checked /> Нет лифта</label>
     </div>
-  </fieldset>
 
-  <button type="button" onclick="saveFormData()">Сохранить параметры</button>
-  <button type="button" onclick="calculateDelivery()">Рассчитать стоимость</button>
-  <button type="button" onclick="openAdminPanel()">Админка</button>
+    <button type="button" onclick="saveFormData()">Сохранить параметры</button>
+    <button type="button" onclick="calculateDelivery()">Рассчитать стоимость</button>
+    <button type="button" onclick="openAdminPanel()">Админка</button>
+  </fieldset>
 </form>
 
 <div id="delivery_result"></div>
 
+<!-- Скрипты -->
 <script src="delivery.js"></script>
 <script>
   const warehouse = [54.907129, 38.054109];
   let clientPlacemark = null;
   let routeLine = null;
-
-  window.onload = () => {
-    loadTariffs(); // загружаем тарифы
-  };
+  window.formData = {};
 
   ymaps.ready(() => {
     const map = new ymaps.Map("map", { center: warehouse, zoom: 9 });
-
-    const warehousePlacemark = new ymaps.Placemark(warehouse, {
-      balloonContent: "Склад"
-    }, {
-      preset: "islands#redIcon",
-      iconCaption: "Склад"
+    const warehousePlacemark = new ymaps.Placemark(warehouse, { balloonContent: "Склад" }, {
+      preset: "islands#redIcon", iconCaption: "Склад"
     });
     map.geoObjects.add(warehousePlacemark);
 
@@ -130,21 +125,16 @@
       if (clientPlacemark) map.geoObjects.remove(clientPlacemark);
       if (routeLine) map.geoObjects.remove(routeLine);
 
-      clientPlacemark = new ymaps.Placemark(coords, {
-        balloonContent: "Клиент"
-      }, {
-        preset: "islands#greenIcon",
-        iconCaption: "Клиент"
+      clientPlacemark = new ymaps.Placemark(coords, { balloonContent: "Клиент" }, {
+        preset: "islands#greenIcon", iconCaption: "Клиент"
       });
       map.geoObjects.add(clientPlacemark);
 
       ymaps.route([warehouse, coords], { routingMode: "auto" }).then(route => {
         routeLine = route;
         map.geoObjects.add(routeLine);
-        const distanceKm = route.getLength() / 1000;
-        window.formData = window.formData || {};
-        window.formData.deliveryDistance = distanceKm;
-        console.log("📏 Расстояние до клиента:", distanceKm.toFixed(2), "км");
+        window.formData.deliveryDistance = route.getLength() / 1000;
+        console.log("📏 Расстояние:", window.formData.deliveryDistance.toFixed(2), "км");
       });
     }
   });
@@ -163,23 +153,22 @@
       only_unload: document.querySelector("input[name='only_unload']:checked").value,
       floor: document.getElementById("floor").value,
       lift: document.querySelector("input[name='lift']:checked").value,
-      large_sheets: Array.from(document.querySelectorAll("#large_format_table tbody tr")).map(row => {
-        return {
-          format: row.querySelector("select").value,
-          count: row.querySelector("input").value
-        };
-      })
+      large_sheets: Array.from(document.querySelectorAll("#large_format_table tbody tr")).map(row => ({
+        format: row.querySelector("select").value,
+        count: row.querySelector("input").value
+      }))
     };
-    alert("Параметры сохранены!");
+    alert("Параметры сохранены");
   }
 
   function addLargeFormatRow() {
     const tbody = document.querySelector("#large_format_table tbody");
     const row = document.createElement("tr");
 
+    const formats = ["", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300", "120x240", "120x278", "120x280", "120x300", "159x324", "160x320", "162x324", "80x324"];
+
     const formatCell = document.createElement("td");
     const select = document.createElement("select");
-    const formats = ["", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300", "120x240", "120x278", "120x280", "120x300", "159x324", "160x320", "162x324", "80x324"];
     formats.forEach(f => {
       const option = document.createElement("option");
       option.value = f;
