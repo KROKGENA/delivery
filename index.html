@@ -5,7 +5,48 @@
   <title>Калькулятор доставки плитки</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <script src="https://api-maps.yandex.ru/2.1/?apikey=a181d434-9dec-492b-8838-73ec5df31ebb&lang=ru_RU"></script>
+  <!-- Yandex.Maps -->
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=a181d434-9dec-492b-8838-73ec5df31ebb&lang=ru_RU">function addLargeFormatRow() {
+  const tbody = document.querySelector("#large_format_table tbody");
+  const row = document.createElement("tr");
+
+  const formatCell = document.createElement("td");
+  const select = document.createElement("select");
+  const formats = [
+    "", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300",
+    "120x240", "120x278", "120x280", "120x300",
+    "159x324", "160x320", "162x324", "80x324"
+  ];
+  formats.forEach(f => {
+    const option = document.createElement("option");
+    option.value = f;
+    option.textContent = f || "Выберите";
+    select.appendChild(option);
+  });
+  formatCell.appendChild(select);
+
+  const qtyCell = document.createElement("td");
+  const qtyInput = document.createElement("input");
+  qtyInput.type = "number";
+  qtyInput.min = "1";
+  qtyInput.style.width = "60px";
+  qtyCell.appendChild(qtyInput);
+
+  const deleteCell = document.createElement("td");
+  const btn = document.createElement("button");
+  btn.textContent = "✖";
+  btn.type = "button";
+  btn.onclick = () => row.remove();
+  deleteCell.appendChild(btn);
+
+  row.appendChild(formatCell);
+  row.appendChild(qtyCell);
+  row.appendChild(deleteCell);
+  tbody.appendChild(row);
+}
+</script>
+
+  <!-- Dadata -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/js/jquery.suggestions.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" />
@@ -57,22 +98,18 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin: 8px 0;
-      padding: 8px 10px;
-      border-radius: 6px;
-      background: #f1f1f1;
+      margin: 6px 0;
       cursor: pointer;
     }
 
     input[type="checkbox"], input[type="radio"] {
-      transform: scale(1.4);
+      transform: scale(1.2);
       cursor: pointer;
     }
 
     #map {
       width: 100%;
-      height: 100%;
-      min-height: 400px;
+      height: 400px;
       border-radius: 8px;
     }
 
@@ -105,17 +142,6 @@
       border-left: 5px solid #1e2d7d;
       background: #eef3ff;
       border-radius: 6px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-
-    th, td {
-      padding: 8px;
-      text-align: left;
     }
 
     @media (max-width: 768px) {
@@ -216,6 +242,65 @@
 </div>
 
 <script>
+  const warehouse = [54.907129, 38.054109];
+  let clientPlacemark = null;
+  let routeLine = null;
+
+  ymaps.ready(() => {
+    const map = new ymaps.Map("map", {
+      center: warehouse,
+      zoom: 9,
+      controls: []
+    });
+
+    const warehousePlacemark = new ymaps.Placemark(warehouse, {
+      balloonContent: "Склад"
+    }, {
+      preset: "islands#redIcon",
+      iconCaption: "Склад"
+    });
+    map.geoObjects.add(warehousePlacemark);
+
+    map.events.add("click", e => {
+      const coords = e.get("coords");
+      setClientPoint(coords);
+    });
+
+    $("#address").suggestions({
+      token: "53d32f43f22df54e47727e3ba091627532e7cda5",
+      type: "ADDRESS",
+      onSelect: function (suggestion) {
+        ymaps.geocode(suggestion.value).then(res => {
+          const coords = res.geoObjects.get(0).geometry.getCoordinates();
+          setClientPoint(coords);
+          map.setCenter(coords, 12);
+        });
+      }
+    });
+
+    function setClientPoint(coords) {
+      if (clientPlacemark) map.geoObjects.remove(clientPlacemark);
+      if (routeLine) map.geoObjects.remove(routeLine);
+
+      clientPlacemark = new ymaps.Placemark(coords, {
+        balloonContent: "Клиент"
+      }, {
+        preset: "islands#greenIcon",
+        iconCaption: "Клиент"
+      });
+      map.geoObjects.add(clientPlacemark);
+
+      ymaps.route([warehouse, coords], { routingMode: "auto" }).then(route => {
+        routeLine = route;
+        map.geoObjects.add(routeLine);
+        const distanceKm = route.getLength() / 1000;
+        window.deliveryDistance = distanceKm;
+      }, () => {
+        alert("Не удалось построить маршрут");
+      });
+    }
+  });
+
   function validateAndSave() {
     const standard = parseInt(document.getElementById("weight_standard").value) || 0;
     const large = parseInt(document.getElementById("weight_large").value) || 0;
