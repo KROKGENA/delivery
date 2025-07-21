@@ -41,7 +41,7 @@
       min-width: 300px;
     }
 
-    input, select, button {
+    input, select {
       padding: 10px;
       font-size: 16px;
       width: 100%;
@@ -75,6 +75,7 @@
     button {
       background: linear-gradient(145deg, #2036c4, #1b2d9a);
       color: white;
+      padding: 10px 18px;
       font-size: 15px;
       border: none;
       border-radius: 8px;
@@ -110,23 +111,27 @@
       .main-container {
         flex-direction: column;
       }
-    }
+   }
 
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 8px 0;
-      font-weight: normal;
-      cursor: pointer;
-      line-height: 1.4;
-      word-break: break-word;
-    }
-    .checkbox-label input[type="checkbox"] {
-      transform: scale(1.2);
-      cursor: pointer;
-      margin-right: 6px;
-    }
+}
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  font-weight: normal;
+  cursor: pointer;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.checkbox-label input[type="checkbox"] {
+  transform: scale(1.2);
+  cursor: pointer;
+}
+.checkbox-label input[type="checkbox"] {
+  margin-right: 6px;
+}
+
   </style>
 </head>
 <body>
@@ -139,73 +144,77 @@
     <input type="text" id="address" placeholder="например, г. Москва, ул. Ленина 10">
 
     <form id="deliveryForm">
-      <fieldset>
-        <legend>Параметры доставки</legend>
+<fieldset>
+  <legend>Параметры доставки</legend>
 
-        <label>Вес стандартной плитки (кг):</label>
-        <input type="number" id="weight_standard" min="0" step="1">
+  <label>Вес стандартной плитки (кг):</label>
+  <input type="number" id="weight_standard" min="0" step="1">
 
-        <label>Вес крупной плитки (кг):</label>
-        <input type="number" id="weight_large" min="0" step="1" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'block' : 'none';">
+  <label>Вес крупной плитки (кг):</label>
+  <input type="number" id="weight_large" min="0" step="1" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'block' : 'none';">
 
-        <div id="large_format_block" style="display:none;">
-          <label>Крупный формат плитки:</label>
-          <table id="large_format_table">
-            <thead>
-              <tr><th>Формат</th><th>Кол-во листов</th><th></th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          <button type="button" onclick="addLargeFormatRow()">➕ Добавить формат</button>
-        </div>
+  <div id="large_format_block" style="display:none;">
+    <label>Крупный формат плитки:</label>
+    <table id="large_format_table">
+      <thead>
+        <tr><th>Формат</th><th>Кол-во листов</th><th></th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button type="button" onclick="addLargeFormatRow()">➕ Добавить формат</button>
+  </div>
 
-        <label>Тип загрузки:</label>
-        <select id="loading_type">
-          <option value="любая">Любая</option>
-          <option value="верхняя">Верхняя</option>
-          <option value="боковая">Боковая</option>
-          <option value="гидролифт">Гидролифт</option>
-          <option value="manipulator">Манипулятор</option>
-        </select>
+  <label>Тип загрузки:</label>
+  <select id="loading_type">
+    <option value="любая">Любая</option>
+    <option value="верхняя">Верхняя</option>
+    <option value="боковая">Боковая</option>
+    <option value="гидролифт">Гидролифт</option>
+    <option value="manipulator">Манипулятор</option>
+  </select>
 
-        <label class="checkbox-label">
-          <input type="checkbox" id="return_pallets">Возврат тары
-        </label>
+  <label class="checkbox-label">
+    <input type="checkbox" id="return_pallets">
+    Возврат тары
+  </label>
 
-        <label class="checkbox-label">
-          <input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';">Подземный паркинг
-        </label>
+  <label class="checkbox-label">
+    <input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';">
+    Подземный паркинг
+  </label>
 
-        <div id="height_block" style="display:none; margin-left: 20px;">
-          <label>Ограничение по высоте (м):</label>
-          <input type="number" id="height_limit" min="1" step="0.1" placeholder="например, 2.2">
-        </div>
+  <div id="height_block" style="display:none; margin-left: 20px;">
+    <label>Ограничение по высоте (м):</label>
+    <input type="number" id="height_limit" min="1" step="0.1">
+  </div>
 
-        <label class="checkbox-label">
-          <input type="checkbox" id="precise_time" onchange="document.getElementById('time_block').style.display = this.checked ? 'block' : 'none';">Доставка к точному времени
-        </label>
+  <label class="checkbox-label">
+    <input type="checkbox" id="precise_time" onchange="document.getElementById('time_block').style.display = this.checked ? 'block' : 'none';">
+    Доставка к точному времени
+  </label>
 
-        <div id="time_block" style="display:none; margin-left: 20px;">
-          <label>Время:</label>
-          <input type="time" id="delivery_time">
-        </div>
+  <div id="time_block" style="display:none; margin-left: 20px;">
+    <label>Время:</label>
+    <input type="time" id="delivery_time">
+  </div>
 
-        <label class="checkbox-label">
-          <input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';">Нужны грузчики
-        </label>
+  <label class="checkbox-label">
+    <input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';">
+    Нужны грузчики
+  </label>
 
-        <div id="movers_block" style="display:none; margin-left: 20px;">
-          <label><input type="radio" name="only_unload" value="true" checked> Только выгрузка</label>
-          <label><input type="radio" name="only_unload" value="false"> Выгрузка и подъём</label><br>
-          Этаж: <input type="number" id="floor" min="1"><br>
-          <label><input type="radio" name="lift" value="true"> Есть лифт</label>
-          <label><input type="radio" name="lift" value="false" checked> Нет лифта</label>
-        </div>
-      </fieldset>
+  <div id="movers_block" style="display:none; margin-left: 20px;">
+    <label><input type="radio" name="only_unload" value="true" checked> Только выгрузка</label>
+    <label><input type="radio" name="only_unload" value="false"> Выгрузка и подъём</label><br>
+    Этаж: <input type="number" id="floor" min="1"><br>
+    <label><input type="radio" name="lift" value="true"> Есть лифт</label>
+    <label><input type="radio" name="lift" value="false" checked> Нет лифта</label>
+  </div>
+</fieldset>
+
 
       <button type="button" onclick="saveFormData()">Сохранить параметры</button>
       <button type="button" onclick="calculateDelivery()">Рассчитать стоимость</button>
-      <button type="button" onclick="openAdminPanel()">⚙️ Админка тарифов</button>
     </form>
 
     <div id="delivery_result"></div>
@@ -216,48 +225,139 @@
   </div>
 </div>
 
-<script src="delivery.js"></script>
 <script>
-function addLargeFormatRow() {
-  const tbody = document.querySelector("#large_format_table tbody");
-  const row = document.createElement("tr");
+  const warehouse = [54.907129, 38.054109];
+  let clientPlacemark = null;
+  let routeLine = null;
+  let formData = {};
 
-  const formatCell = document.createElement("td");
-  const select = document.createElement("select");
-  const formats = [
-    "", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300",
-    "120x240", "120x278", "120x280", "120x300",
-    "159x324", "160x320", "162x324", "80x324"
-  ];
-  formats.forEach(f => {
-    const option = document.createElement("option");
-    option.value = f;
-    option.textContent = f || "Выберите";
-    select.appendChild(option);
+  ymaps.ready(() => {
+    const map = new ymaps.Map("map", {
+      center: warehouse,
+      zoom: 9,
+      controls: []
+    });
+
+    const warehousePlacemark = new ymaps.Placemark(warehouse, {
+      balloonContent: "Склад"
+    }, {
+      preset: "islands#redIcon",
+      iconCaption: "Склад"
+    });
+    map.geoObjects.add(warehousePlacemark);
+
+    map.events.add("click", e => {
+      const coords = e.get("coords");
+      setClientPoint(coords);
+    });
+
+    $("#address").suggestions({
+      token: "53d32f43f22df54e47727e3ba091627532e7cda5",
+      type: "ADDRESS",
+      onSelect: function (suggestion) {
+        ymaps.geocode(suggestion.value).then(res => {
+          const coords = res.geoObjects.get(0).geometry.getCoordinates();
+          setClientPoint(coords);
+          map.setCenter(coords, 12);
+        });
+      }
+    });
+
+    function setClientPoint(coords) {
+      if (clientPlacemark) map.geoObjects.remove(clientPlacemark);
+      if (routeLine) map.geoObjects.remove(routeLine);
+
+      clientPlacemark = new ymaps.Placemark(coords, {
+        balloonContent: "Клиент"
+      }, {
+        preset: "islands#greenIcon",
+        iconCaption: "Клиент"
+      });
+      map.geoObjects.add(clientPlacemark);
+
+      ymaps.route([warehouse, coords], { routingMode: "auto" }).then(route => {
+        routeLine = route;
+        map.geoObjects.add(routeLine);
+        const distanceKm = route.getLength() / 1000;
+        window.deliveryDistance = distanceKm;
+      }, () => {
+        alert("Не удалось построить маршрут");
+      });
+    }
   });
-  formatCell.appendChild(select);
 
-  const qtyCell = document.createElement("td");
-  const qtyInput = document.createElement("input");
-  qtyInput.type = "number";
-  qtyInput.min = "1";
-  qtyInput.style.width = "60px";
-  qtyCell.appendChild(qtyInput);
+  function addLargeFormatRow() {
+    const tbody = document.querySelector("#large_format_table tbody");
+    const row = document.createElement("tr");
 
-  const deleteCell = document.createElement("td");
-  const btn = document.createElement("button");
-  btn.textContent = "✖";
-  btn.type = "button";
-  btn.onclick = () => row.remove();
-  deleteCell.appendChild(btn);
+    const formatCell = document.createElement("td");
+    const select = document.createElement("select");
+    const formats = [
+      "", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300",
+      "120x240", "120x278", "120x280", "120x300",
+      "159x324", "160x320", "162x324", "80x324"
+    ];
+    formats.forEach(f => {
+      const option = document.createElement("option");
+      option.value = f;
+      option.textContent = f || "Выберите";
+      select.appendChild(option);
+    });
+    formatCell.appendChild(select);
 
-  row.appendChild(formatCell);
-  row.appendChild(qtyCell);
-  row.appendChild(deleteCell);
-  tbody.appendChild(row);
-}
+    const qtyCell = document.createElement("td");
+    const qtyInput = document.createElement("input");
+    qtyInput.type = "number";
+    qtyInput.min = "1";
+    qtyInput.style.width = "60px";
+    qtyCell.appendChild(qtyInput);
+
+    const deleteCell = document.createElement("td");
+    const btn = document.createElement("button");
+    btn.textContent = "✖";
+    btn.type = "button";
+    btn.onclick = () => row.remove();
+    deleteCell.appendChild(btn);
+
+    row.appendChild(formatCell);
+    row.appendChild(qtyCell);
+    row.appendChild(deleteCell);
+    tbody.appendChild(row);
+  }
+
+  function saveFormData() {
+    const largeSheets = [];
+    document.querySelectorAll("#large_format_table tbody tr").forEach(row => {
+      const format = row.querySelector("select").value;
+      const count = row.querySelector("input").value;
+      if (format && count) {
+        largeSheets.push({ format, count });
+      }
+    });
+
+    formData = {
+      weight_standard: parseInt(document.getElementById("weight_standard").value) || 0,
+      weight_large: parseInt(document.getElementById("weight_large").value) || 0,
+      loading_type: document.getElementById("loading_type").value,
+      return_pallets: document.getElementById("return_pallets").checked,
+      underground: document.getElementById("underground").checked,
+      height_limit: document.getElementById("height_limit").value,
+      precise_time: document.getElementById("precise_time").checked,
+      delivery_time: document.getElementById("delivery_time").value,
+      need_movers: document.getElementById("need_movers").checked,
+      only_unload: document.querySelector("input[name='only_unload']:checked").value,
+      floor: document.getElementById("floor").value,
+      lift: document.querySelector("input[name='lift']:checked").value,
+      large_sheets: largeSheets,
+      deliveryDistance: window.deliveryDistance || 0
+    };
+
+    window.formData = formData;
+    alert("Параметры сохранены!");
+  }
 </script>
 
+<script src="delivery.js"></script>
 <footer style="margin-top:40px; font-size: 11px; color: rgba(0,0,0,0.3); text-align: center;">
   Разработано Геннадием Байковым, ООО «СервисКерамика» <a href="https://sceramic.ru" style="color: rgba(0,0,0,0.3); text-decoration: none;">sceramic.ru</a>
 </footer>
