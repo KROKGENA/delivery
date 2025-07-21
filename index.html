@@ -144,10 +144,12 @@
   let formData = {};
 
   ymaps.ready(() => {
-    const map = new ymaps.Map("map", {
-      center: warehouse,
-      zoom: 9
-    });
+const map = new ymaps.Map("map", {
+  center: warehouse,
+  zoom: 9,
+  controls: [] // <== ⛔ отключает ВСЕ встроенные контролы, включая поиск
+});
+
 
     const warehousePlacemark = new ymaps.Placemark(warehouse, {
       balloonContent: "Склад"
