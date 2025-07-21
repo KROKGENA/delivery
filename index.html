@@ -71,9 +71,15 @@
 
 <h1>Калькулятор доставки плитки</h1>
 
-<label for="address">Введите адрес или кликните на карте:</label>
-<input type="text" id="address" placeholder="например, г. Москва, ул. Ленина 10">
-<div id="map"></div>
+<div style="display: flex; flex-wrap: wrap; gap: 20px;">
+  <div style="flex: 1; min-width: 280px; max-width: 400px;">
+    <label for="address">Введите адрес или кликните на карте:</label>
+    <input type="text" id="address" placeholder="например, г. Москва, ул. Ленина 10">
+  </div>
+
+  <div id="map" style="flex: 2; min-width: 280px; height: 400px; border-radius: 6px;"></div>
+</div>
+
 
 <form id="deliveryForm">
   <fieldset>
