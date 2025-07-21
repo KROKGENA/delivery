@@ -1,4 +1,4 @@
-м<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
@@ -16,73 +16,63 @@
   <style>
     body {
       font-family: 'Roboto', sans-serif;
-      background-color: #fff;
-      color: #333;
       margin: 20px;
-      line-height: 1.6;
+      color: #333;
     }
-    #map { width: 100%; height: 400px; margin-top: 20px; }
+    input[type="text"], input[type="number"], select, input[type="time"] {
+      padding: 8px;
+      font-size: 15px;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      margin-top: 10px;
+      border-radius: 6px;
+    }
     fieldset {
       border: 1px solid #ccc;
       padding: 20px;
       border-radius: 8px;
       background: #f9f9f9;
-      max-width: 700px;
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      margin: 12px 0 6px;
-      font-weight: 600;
-    }
-    input[type="number"],
-    input[type="text"],
-    input[type="time"],
-    select {
-      padding: 8px;
-      font-size: 15px;
-      width: 100%;
-      max-width: 400px;
-      box-sizing: border-box;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    input[type="checkbox"],
-    input[type="radio"] {
-      margin-right: 6px;
+      margin-top: 20px;
     }
     button {
       background: #1e2d7d;
-      color: #fff;
+      color: white;
+      padding: 10px 16px;
       border: none;
       border-radius: 6px;
-      padding: 10px 16px;
-      font-size: 15px;
       cursor: pointer;
       margin: 6px 6px 6px 0;
     }
-    button:hover { background: #0e1a5d; }
-    #delivery_result {
-      padding: 15px;
-      background: #eef3ff;
-      border-left: 5px solid #1e2d7d;
-      margin-top: 20px;
-      border-radius: 6px;
-      max-width: 700px;
+    button:hover {
+      background: #0e1a5d;
     }
-    table th, table td { padding: 6px; }
+    #delivery_result {
+      margin-top: 20px;
+      padding: 15px;
+      border-left: 5px solid #1e2d7d;
+      background: #eef3ff;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
 
-<h1>Калькулятор доставки</h1>
+<h1>Калькулятор доставки плитки</h1>
 
+<label for="address">Введите адрес или кликните на карте:</label>
+<input type="text" id="address" placeholder="например, г. Москва, ул. Ленина 10">
 <div id="map"></div>
-
-<label>Или введите адрес:
-  <input type="text" id="address" placeholder="г. Подольск, ул. Ленина 10">
-</label>
 
 <form id="deliveryForm">
   <fieldset>
@@ -92,10 +82,10 @@
     <input type="number" id="weight_standard" min="0" step="1">
 
     <label>Вес крупной плитки (кг):</label>
-    <input type="number" id="weight_large" min="0" step="1" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'inline' : 'none';">
+    <input type="number" id="weight_large" min="0" step="1" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'block' : 'none';">
 
     <div id="large_format_block" style="display:none;">
-      <label>Крупный формат плитки (укажите для каждого формата и количество листов):</label>
+      <label>Крупный формат плитки:</label>
       <table id="large_format_table">
         <thead>
           <tr><th>Формат</th><th>Кол-во листов</th><th></th></tr>
@@ -116,18 +106,21 @@
 
     <label><input type="checkbox" id="return_pallets"> Возврат тары</label>
     <label><input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';"> Подземный паркинг</label>
+
     <div id="height_block" style="display:none; margin-left: 20px;">
       <label>Ограничение по высоте (м):</label>
       <input type="number" id="height_limit" min="1" step="0.1">
     </div>
 
     <label><input type="checkbox" id="precise_time" onchange="document.getElementById('time_block').style.display = this.checked ? 'block' : 'none';"> Доставка к точному времени</label>
+
     <div id="time_block" style="display:none; margin-left: 20px;">
       <label>Время:</label>
       <input type="time" id="delivery_time">
     </div>
 
     <label><input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';"> Нужны грузчики</label>
+
     <div id="movers_block" style="display:none; margin-left: 20px;">
       <label><input type="radio" name="only_unload" value="true" checked> Только выгрузка</label>
       <label><input type="radio" name="only_unload" value="false"> Выгрузка и подъём</label><br>
@@ -138,16 +131,71 @@
   </fieldset>
 
   <button type="button" onclick="saveFormData()">Сохранить параметры</button>
-  <button type="button" onclick="clearFormData()">Сбросить всё</button>
   <button type="button" onclick="(async () => await calculateDelivery())()">Рассчитать стоимость</button>
 </form>
 
 <div id="delivery_result"></div>
 
 <script>
-  let formData = {};
   const warehouse = [54.907129, 38.054109];
-  let clientCoords = null;
+  let clientPlacemark = null;
+  let routeLine = null;
+  let formData = {};
+
+  ymaps.ready(() => {
+    const map = new ymaps.Map("map", {
+      center: warehouse,
+      zoom: 9
+    });
+
+    const warehousePlacemark = new ymaps.Placemark(warehouse, {
+      balloonContent: "Склад"
+    }, {
+      preset: "islands#redIcon",
+      iconCaption: "Склад"
+    });
+    map.geoObjects.add(warehousePlacemark);
+
+    map.events.add("click", e => {
+      const coords = e.get("coords");
+      setClientPoint(coords);
+    });
+
+    $("#address").suggestions({
+      token: "53d32f43f22df54e47727e3ba091627532e7cda5",
+      type: "ADDRESS",
+      onSelect: function (suggestion) {
+        ymaps.geocode(suggestion.value).then(res => {
+          const coords = res.geoObjects.get(0).geometry.getCoordinates();
+          setClientPoint(coords);
+          map.setCenter(coords, 12);
+        });
+      }
+    });
+
+    function setClientPoint(coords) {
+      if (clientPlacemark) map.geoObjects.remove(clientPlacemark);
+      if (routeLine) map.geoObjects.remove(routeLine);
+
+      clientPlacemark = new ymaps.Placemark(coords, {
+        balloonContent: "Клиент"
+      }, {
+        preset: "islands#greenIcon",
+        iconCaption: "Клиент"
+      });
+      map.geoObjects.add(clientPlacemark);
+
+      ymaps.route([warehouse, coords], { routingMode: "auto" }).then(route => {
+        routeLine = route;
+        map.geoObjects.add(routeLine);
+        const distanceKm = route.getLength() / 1000;
+        formData.deliveryDistance = distanceKm;
+        console.log("📏 Расстояние до клиента:", distanceKm.toFixed(2), "км");
+      }, () => {
+        alert("Не удалось построить маршрут");
+      });
+    }
+  });
 
   function saveFormData() {
     formData = {
@@ -167,19 +215,18 @@
     alert("Параметры сохранены!");
   }
 
-  function clearFormData() {
-    document.getElementById("deliveryForm").reset();
-    formData = {};
-    alert("Форма сброшена.");
-  }
-
   function addLargeFormatRow() {
     const tbody = document.querySelector("#large_format_table tbody");
     const row = document.createElement("tr");
 
     const formatCell = document.createElement("td");
     const select = document.createElement("select");
-    const formats = ["", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300", "120x240", "120x278", "120x280", "120x300", "159x324", "160x320", "162x324", "80x324"];
+    const formats = [
+  "", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300",
+  "120x240", "120x278", "120x280", "120x300",
+  "159x324", "160x320", "162x324", "80x324"
+];
+
     formats.forEach(f => {
       const option = document.createElement("option");
       option.value = f;
@@ -208,74 +255,19 @@
     tbody.appendChild(row);
   }
 
-  function calculateDelivery() {
+  async function calculateDelivery() {
     if (!formData.deliveryDistance) {
-      alert("Сначала выберите адрес или точку на карте");
+      alert("Выберите адрес или точку на карте");
       return;
     }
-    document.getElementById("delivery_result").innerHTML =
-      `<p><strong>Расстояние:</strong> ${formData.deliveryDistance.toFixed(2)} км</p>`;
+
+    const baseCost = Math.round(2500 + formData.deliveryDistance * 60);
+    document.getElementById("delivery_result").innerHTML = `
+      <h3>Расчёт доставки</h3>
+      <p>Расстояние: ${formData.deliveryDistance.toFixed(2)} км</p>
+      <p>Стоимость: <strong>${baseCost.toLocaleString()} ₽</strong></p>
+    `;
   }
-
-  ymaps.ready(function () {
-    const myMap = new ymaps.Map("map", {
-      center: warehouse,
-      zoom: 9
-    });
-
-    const warehousePlacemark = new ymaps.Placemark(warehouse, {
-      balloonContent: "Склад"
-    }, {
-      preset: "islands#redDotIcon"
-    });
-
-    myMap.geoObjects.add(warehousePlacemark);
-
-    let clientPlacemark, routeLine;
-
-    function buildRoute(toCoords) {
-      if (routeLine) myMap.geoObjects.remove(routeLine);
-
-      ymaps.route([warehouse, toCoords], {routingMode: "auto"}).then(function (route) {
-        routeLine = route;
-        myMap.geoObjects.add(routeLine);
-
-        const distance = route.getLength() / 1000;
-        formData.deliveryDistance = distance;
-      }, function (error) {
-        alert("Не удалось построить маршрут");
-      });
-    }
-
-    myMap.events.add("click", function (e) {
-      const coords = e.get("coords");
-      if (clientPlacemark) myMap.geoObjects.remove(clientPlacemark);
-
-      clientPlacemark = new ymaps.Placemark(coords, {
-        balloonContent: "Клиент"
-      }, {
-        preset: "islands#greenDotIcon"
-      });
-
-      myMap.geoObjects.add(clientPlacemark);
-      buildRoute(coords);
-    });
-
-    $("#address").suggestions({
-      token: "5fd64aaabd5d53f24f5f1f5d5f5f5f5f5f5f5f5f",
-      type: "ADDRESS",
-      onSelect: function (suggestion) {
-        ymaps.geocode(suggestion.value).then(function (res) {
-          const coords = res.geoObjects.get(0).geometry.getCoordinates();
-          myMap.setCenter(coords, 12);
-          if (clientPlacemark) myMap.geoObjects.remove(clientPlacemark);
-          clientPlacemark = new ymaps.Placemark(coords, { balloonContent: suggestion.value }, { preset: "islands#greenDotIcon" });
-          myMap.geoObjects.add(clientPlacemark);
-          buildRoute(coords);
-        });
-      }
-    });
-  });
 </script>
 
 </body>
