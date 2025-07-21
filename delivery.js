@@ -1,268 +1,396 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>Калькулятор доставки плитки</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+let vehicles = [];
 
-  <!-- Yandex.Maps -->
-  <script src="https://api-maps.yandex.ru/2.1/?apikey=a181d434-9dec-492b-8838-73ec5df31ebb&lang=ru_RU"></script>
+async function loadTariffs(forceReloadFromGit = false) {
+  try {
+    const basePath = location.pathname.includes("/delivery/") ? "/delivery/" : "/";
+    const saved = localStorage.getItem("custom_tariffs");
 
-  <!-- Dadata -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/js/jquery.suggestions.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" />
+    if (saved && !forceReloadFromGit) {
+      const parsed = JSON.parse(saved);
+      // 🔧 Исправление: если сохранено как массив, оборачиваем в объект
+      vehicles = Array.isArray(parsed) ? parsed : (parsed.vehicles || []);
+      console.log("✅ Загружено из localStorage");
+    } else {
+      const response = await fetch(`${basePath}data/tariffs.json?nocache=${Date.now()}`);
+      const json = await response.json();
+      vehicles = json.vehicles;
 
-  <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      margin: 20px;
-      color: #333;
+      localStorage.setItem("custom_tariffs", JSON.stringify(json));
+      console.log("✅ Загружено с GitHub");
     }
 
-    h1 {
-      text-align: center;
+    vehicles = vehicles.map(v => ({
+      ...v,
+      maxWeight: getMaxWeightFromName(v.name),
+      loadingTypes: getLoadingTypesFromName(v.name)
+    }));
+  } catch (e) {
+    console.error("❌ Не удалось загрузить тарифы:", e);
+    alert("Ошибка загрузки тарифов: " + e.message);
+  }
+}
+
+function getMaxWeightFromName(name) {
+  const lowered = name.toLowerCase();
+  if (/манипулятор 15т/.test(lowered)) return 15000;
+  if (/манипулятор 10т/.test(lowered)) return 10000;
+  if (/манипулятор 5т/.test(lowered)) return 5000;
+  if (/еврофура/.test(lowered)) return 20000;
+  if (/\b20т\b/.test(lowered)) return 20000;
+  if (/\b15т\b/.test(lowered)) return 15000;
+  if (/\b10т\b/.test(lowered)) return 10000;
+  if (/\b5т\b/.test(lowered)) return 5000;
+  if (/\b3т\b/.test(lowered)) return 3000;
+  if (/\b1\.5т\b/.test(lowered)) return 1500;
+  if (/\b1т\b/.test(lowered)) return 1000;
+  return 0;
+}
+
+function getLoadingTypesFromName(name) {
+  const lowered = name.toLowerCase();
+  if (/гидролифт/.test(lowered)) return ["гидролифт"];
+  if (/манипулятор/.test(lowered)) return ["manipulator"];
+  return ["любая", "верхняя", "боковая"];
+}
+
+function selectVehicle(weight, loadingType) {
+  const normalizedType = (loadingType || "любая").toLowerCase();
+  console.log("🚚 Подбор авто: вес =", weight, "| тип загрузки =", normalizedType);
+
+  const vehiclePriority = [
+    { name: "Манипулятор 15т", min: 10001, max: 15000 },
+    { name: "Манипулятор 10т", min: 5001, max: 10000 },
+    { name: "Манипулятор 5т", min: 0, max: 5000 },
+    { name: "а/м 5т гидролифт", min: 0, max: 5000 },
+    { name: "Еврофура 20т", min: 10001, max: 20000 },
+    { name: "а/м 10т", min: 5001, max: 10000 },
+    { name: "а/м 5т", min: 3001, max: 5000 },
+    { name: "а/м до 3т", min: 1501, max: 3000 },
+    { name: "а/м до 1.5т", min: 1001, max: 1500 },
+    { name: "а/м до 1т", min: 0, max: 1000 },
+  ];
+
+  for (const rule of vehiclePriority) {
+    const fitsWeight = weight >= rule.min && weight <= rule.max;
+    if (!fitsWeight) continue;
+
+    const found = vehicles.find(v =>
+      v.name.toLowerCase() === rule.name.toLowerCase() &&
+      v.loadingTypes.includes(normalizedType)
+    );
+
+    console.log(`  🔍 Пробуем: ${rule.name} | Диапазон: ${rule.min}-${rule.max} | Найден: ${found?.name || "нет"}`);
+
+    if (found) {
+      console.log("✅ Найдено:", found.name);
+      return found;
+    }
+  }
+
+  console.warn("❌ Нет подходящего авто");
+  return null;
+}
+
+function calculateKmCostSmooth(distance, baseRate, minRate, decay = 0.01) {
+  const kmStep = 0.1;
+  let cost = 0;
+  for (let km = kmStep; km <= distance; km += kmStep) {
+    const rate = minRate + (baseRate - minRate) * Math.exp(-decay * km);
+    cost += rate * kmStep;
+  }
+  return Math.round(cost);
+}
+
+// ✅ Продолжение будет вставлено ниже отдельно из-за длины
+// ... предыдущий код выше остаётся без изменений
+
+function getLoadingSurcharge(vehicle, loadingType) {
+  const wt = vehicle.maxWeight;
+  if (loadingType === "любая") return 0;
+  if (wt <= 3000) return 1500;
+  if (wt === 5000) return loadingType === "боковая" ? 2000 : 2500;
+  if (wt === 10000) return loadingType === "боковая" ? 2500 : 3000;
+  if (wt === 20000) return loadingType === "боковая" ? 3000 : 3500;
+  return 0;
+}
+
+function getMoversCost(data) {
+  if (!data.need_movers) return 0;
+
+  const floor = parseInt(data.floor || 1);
+  const hasLift = data.lift === "true";
+  const isOnlyUnload = data.only_unload === "true";
+  const standard = data.weight_standard || 0;
+  const large = data.weight_large || 0;
+  const format = data.large_format || "";
+  let total = 0;
+
+  const largeFormats = {
+    "100x200": { canLift: true, rate: 300, min: 7000 },
+    "100x260": { canLift: true, rate: 500, min: 12000 },
+    "100x280": { canLift: true, rate: 500, min: 12000 },
+    "100x290": { canLift: false, rate: 500, min: 12000 },
+    "100x295": { canLift: false, rate: 500, min: 12000 },
+    "100x299": { canLift: false, rate: 500, min: 12000 },
+    "100x300": { canLift: false, rate: 500, min: 12000 },
+    "120x240": { canLift: false, rate: 500, min: 12000 },
+    "120x278": { canLift: false, rate: 550, min: 12000 },
+    "120x280": { canLift: false, rate: 550, min: 12000 },
+    "120x300": { canLift: false, rate: 550, min: 12000 },
+    "159x324": { canLift: false, rate: 700, min: 18000 },
+    "160x320": { canLift: false, rate: 700, min: 18000 },
+    "162x324": { canLift: false, rate: 700, min: 18000 },
+    "80x324":  { canLift: false, rate: 500, min: 12000 },
+  };
+
+  if (Array.isArray(data.large_sheets)) {
+    let sum = 0;
+    let maxMin = 0;
+
+    for (const item of data.large_sheets) {
+      const f = largeFormats[item.format];
+      const qty = parseInt(item.count) || 0;
+      if (!f || qty === 0) continue;
+
+      if (hasLift && !f.canLift) {
+        console.warn(`⚠️ Формат ${item.format} не влезает в лифт`);
+      }
+
+      const liftFactor = isOnlyUnload ? 1 : floor;
+      const cost = qty * f.rate * liftFactor;
+      sum += cost;
+
+      if (f.min > maxMin) maxMin = f.min;
     }
 
-    .main-container {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      flex-direction: row;
-    }
+    total += sum < maxMin ? maxMin : sum;
+  }
 
-    .form-section {
-      flex: 1 1 400px;
-      max-width: 600px;
-    }
 
-    .map-section {
-      flex: 1 1 400px;
-      min-width: 300px;
-    }
 
-    input, select {
-      padding: 10px;
-      font-size: 16px;
-      width: 100%;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
+if (standard > 0) {
+  const unload = standard * 2;
 
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-    }
+  if (!isOnlyUnload) {
+    const baseLift = standard * 4;
 
-    #map {
-      width: 100%;
-      height: 100%;
-      min-height: 400px;
-      border-radius: 8px;
+    if (hasLift) {
+      // Лифт есть
+      const cost = unload + baseLift;
+      total += cost < 2000 ? 2000 : cost;
+    } else {
+      // Лифта нет, подъём вручную с 2 этажа
+      const extraFloors = Math.max(0, floor - 1);
+      const manualLift = standard * extraFloors * 2;
+      const cost = unload + baseLift + manualLift;
+      total += cost < 6000 ? 6000 : cost;
     }
+  } else {
+    // Только выгрузка
+    total += unload;
+  }
+}
 
-    fieldset {
-      border: 1px solid #ccc;
-      padding: 20px;
-      border-radius: 10px;
-      background: #f9f9f9;
-      margin-top: 20px;
-    }
 
-    button {
-      background: linear-gradient(145deg, #2036c4, #1b2d9a);
-      color: white;
-      padding: 10px 18px;
-      font-size: 15px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin: 6px 6px 6px 0;
-      transition: background 0.2s ease;
-    }
+  return total;
+}
 
-    button:hover {
-      background: #0e1a5d;
-    }
+// Продолжение следует...
+// ... предыдущий код выше остаётся без изменений
 
-    #delivery_result {
-      margin-top: 20px;
-      padding: 15px;
-      border-left: 5px solid #1e2d7d;
-      background: #eef3ff;
-      border-radius: 6px;
-    }
+function getLoadingSurcharge(vehicle, loadingType) {
+  const wt = vehicle.maxWeight;
+  if (loadingType === "любая") return 0;
+  if (wt <= 3000) return 1500;
+  if (wt === 5000) return loadingType === "боковая" ? 2000 : 2500;
+  if (wt === 10000) return loadingType === "боковая" ? 2500 : 3000;
+  if (wt === 20000) return loadingType === "боковая" ? 3000 : 3500;
+  return 0;
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
 
-    th, td {
-      padding: 8px;
-      text-align: left;
-    }
 
-    @media (max-width: 768px) {
-      .main-container {
-        flex-direction: column;
+async function calculateDelivery() {
+  if (vehicles.length === 0) {
+    await loadTariffs();
+  }
+
+  if (!window.formData) {
+    alert("Сначала сохраните параметры");
+    return;
+  }
+
+  const data = window.formData;
+  const totalWeight = (data.weight_standard || 0) + (data.weight_large || 0);
+  const loadingType = data.loading_type || "любая";
+
+  console.log("📦 Вес общий:", totalWeight, "| Тип загрузки:", loadingType);
+
+  let deliveryCost = 0;
+  let moversCost = 0;
+  let vehicleName = "";
+  let details = "";
+
+  if (data.underground && parseFloat(data.height_limit) < 2.2) {
+    let left = totalWeight;
+    const parts = [];
+
+    while (left > 0) {
+      if (left > 1500) {
+        parts.push(1500);
+        left -= 1500;
+      } else {
+        parts.push(left);
+        left = 0;
       }
     }
 
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 8px 0;
-      font-weight: normal;
-      cursor: pointer;
-      line-height: 1.4;
-      word-break: break-word;
+    for (const weight of parts) {
+      const v = selectVehicle(weight, "верхняя");
+      if (!v) {
+        console.warn(`Не удалось подобрать машину для ${weight} кг`);
+        continue;
+      }
+      const kmCost = calculateKmCostSmooth(data.deliveryDistance, v.basePerKm, v.minPerKm, v.decay);
+      const surcharge = getLoadingSurcharge(v, "верхняя");
+      deliveryCost += v.minTariff + kmCost + surcharge;
+      details += `<p>🚚 ${v.name} (${weight} кг): ${v.minTariff.toLocaleString()} ₽ + ${kmCost.toLocaleString()} ₽ + ${surcharge.toLocaleString()} ₽</p>`;
     }
-    .checkbox-label input[type="checkbox"] {
-      transform: scale(1.2);
-      cursor: pointer;
-      margin-right: 6px;
+
+    deliveryCost += 1500;
+    vehicleName = "Несколько авто (ограничение по высоте)";
+  } else {
+    const v = selectVehicle(totalWeight, loadingType);
+    if (!v) {
+      document.getElementById("delivery_result").innerHTML = "<p style='color:red;'>Нет подходящего транспорта</p>";
+      return;
     }
-  </style>
-</head>
-<body>
 
-<h1>Калькулятор доставки плитки</h1>
+    const kmCost = calculateKmCostSmooth(data.deliveryDistance, v.basePerKm, v.minPerKm, v.decay);
+    const surcharge = getLoadingSurcharge(v, loadingType);
+    deliveryCost = v.minTariff + kmCost + surcharge;
+    if (data.return_pallets) deliveryCost += 2500;
+    if (data.precise_time) deliveryCost += 2500;
+    if (data.underground) deliveryCost += 1500;
 
-<div class="main-container">
-  <div class="form-section">
-    <label for="address">Введите адрес или кликните на карте:</label>
-    <input type="text" id="address" placeholder="например, г. Москва, ул. Ленина 10">
+    vehicleName = v.name;
+    details = `
+      <p><strong>Стоимость подачи:</strong> ${v.minTariff.toLocaleString()} ₽</p>
+      <p><strong>Расстояние:</strong> ${data.deliveryDistance.toFixed(2)} км ≈ ${kmCost.toLocaleString()} ₽</p>
+      ${surcharge > 0 ? `<p><strong>Надбавка за загрузку (${loadingType}):</strong> ${surcharge.toLocaleString()} ₽</p>` : ""}
+      ${data.underground ? `<p>Подземный паркинг: 1 500 ₽</p>` : ""}
+      ${data.return_pallets ? `<p>Возврат тары: 2 500 ₽</p>` : ""}
+      ${data.precise_time ? `<p>Доставка к точному времени: 2 500 ₽</p>` : ""}
+    `;
+  }
 
-    <form id="deliveryForm">
-      <fieldset>
-        <legend>Параметры доставки</legend>
+  moversCost = getMoversCost(data);
 
-        <label>Вес стандартной плитки (кг):</label>
-        <input type="number" id="weight_standard" min="0" step="1">
+  const compactHtml = `
+    <p><strong>🚚 Доставка:</strong> ${deliveryCost.toLocaleString()} ₽</p>
+    <p><strong>👷 Грузчики:</strong> ${moversCost.toLocaleString()} ₽</p>
+    <hr>
+    <h3>Итого: ${(deliveryCost + moversCost).toLocaleString()} ₽</h3>
+    <div id="details_block" style="display:none;">
+      <h3>🚚 Расчёт стоимости доставки</h3>
+      <p><strong>Транспорт:</strong> ${vehicleName}</p>
+      <p><strong>Общий вес:</strong> ${totalWeight} кг</p>
+      <p><strong>Тип загрузки:</strong> ${loadingType}</p>
+      <p><strong>Расстояние:</strong> ${data.deliveryDistance.toFixed(2)} км</p>
+      ${details}
+      ${moversCost > 0 ? `<h3>👷 Грузчики:</h3><p>${moversCost.toLocaleString()} ₽</p>` : ""}
+    </div>
+  `;
 
-        <label>Вес крупной плитки (кг):</label>
-        <input type="number" id="weight_large" min="0" step="1" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'block' : 'none';">
-
-        <div id="large_format_block" style="display:none;">
-          <label>Крупный формат плитки:</label>
-          <table id="large_format_table">
-            <thead>
-              <tr><th>Формат</th><th>Кол-во листов</th><th></th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          <button type="button" onclick="addLargeFormatRow()">➕ Добавить формат</button>
-        </div>
-
-        <label>Тип загрузки:</label>
-        <select id="loading_type">
-          <option value="любая">Любая</option>
-          <option value="верхняя">Верхняя</option>
-          <option value="боковая">Боковая</option>
-          <option value="гидролифт">Гидролифт</option>
-          <option value="manipulator">Манипулятор</option>
-        </select>
-
-        <label class="checkbox-label">
-          <input type="checkbox" id="return_pallets">Возврат тары
-        </label>
-
-        <label class="checkbox-label">
-          <input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';">Подземный паркинг
-        </label>
-
-        <div id="height_block" style="display:none; margin-left: 20px;">
-          <label>Ограничение по высоте (м):</label>
-          <input type="number" id="height_limit" min="1" step="0.1">
-        </div>
-
-        <label class="checkbox-label">
-          <input type="checkbox" id="precise_time" onchange="document.getElementById('time_block').style.display = this.checked ? 'block' : 'none';">Доставка к точному времени
-        </label>
-
-        <div id="time_block" style="display:none; margin-left: 20px;">
-          <label>Время:</label>
-          <input type="time" id="delivery_time">
-        </div>
-
-        <label class="checkbox-label">
-          <input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';">Нужны грузчики
-        </label>
-
-        <div id="movers_block" style="display:none; margin-left: 20px;">
-          <label><input type="radio" name="only_unload" value="true" checked> Только выгрузка</label>
-          <label><input type="radio" name="only_unload" value="false"> Выгрузка и подъём</label><br>
-          Этаж: <input type="number" id="floor" min="1"><br>
-          <label><input type="radio" name="lift" value="true"> Есть лифт</label>
-          <label><input type="radio" name="lift" value="false" checked> Нет лифта</label>
-        </div>
-      </fieldset>
-
-      <button type="button" onclick="saveFormData()">Сохранить параметры</button>
-      <button type="button" onclick="calculateDelivery()">Рассчитать стоимость</button>
-      <button type="button" onclick="openAdminPanel()">⚙️ Админка тарифов</button>
-    </form>
-
-    <div id="delivery_result"></div>
-  </div>
-
-  <div class="map-section">
-    <div id="map"></div>
-  </div>
-</div>
-
-<script src="delivery.js"></script>
-
-<footer style="margin-top:40px; font-size: 11px; color: rgba(0,0,0,0.3); text-align: center;">
-  Разработано Геннадием Байковым, ООО «СервисКерамика» <a href="https://sceramic.ru" style="color: rgba(0,0,0,0.3); text-decoration: none;">sceramic.ru</a>
-</footer>
-
-<script>
-function addLargeFormatRow() {
-  const tbody = document.querySelector("#large_format_table tbody");
-  const row = document.createElement("tr");
-
-  const formatCell = document.createElement("td");
-  const select = document.createElement("select");
-  const formats = [
-    "", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300",
-    "120x240", "120x278", "120x280", "120x300",
-    "159x324", "160x320", "162x324", "80x324"
-  ];
-  formats.forEach(f => {
-    const option = document.createElement("option");
-    option.value = f;
-    option.textContent = f || "Выберите";
-    select.appendChild(option);
-  });
-  formatCell.appendChild(select);
-
-  const qtyCell = document.createElement("td");
-  const qtyInput = document.createElement("input");
-  qtyInput.type = "number";
-  qtyInput.min = "1";
-  qtyInput.style.width = "60px";
-  qtyCell.appendChild(qtyInput);
-
-  const deleteCell = document.createElement("td");
-  const btn = document.createElement("button");
-  btn.textContent = "✖";
-  btn.type = "button";
-  btn.onclick = () => row.remove();
-  deleteCell.appendChild(btn);
-
-  row.appendChild(formatCell);
-  row.appendChild(qtyCell);
-  row.appendChild(deleteCell);
-  tbody.appendChild(row);
+  document.getElementById("delivery_result").innerHTML = compactHtml;
 }
-</script>
 
-</body>
-</html>
+function toggleDetails(e) {
+  e.preventDefault();
+  const block = document.getElementById("details_block");
+  const link = e.target;
+  if (block.style.display === "block") {
+    block.style.display = "none";
+    link.textContent = "Показать подробности";
+  } else {
+    block.style.display = "block";
+    link.textContent = "Скрыть подробности";
+  }
+}
+
+// Продолжение следует...
+// ... предыдущий код выше остаётся без изменений
+
+// ... calculateDelivery и toggleDetails уже добавлены
+
+function openAdminPanel() {
+  if (vehicles.length === 0) {
+    alert("Сначала загрузите тарифы");
+    return;
+  }
+
+  const wrapper = document.createElement("div");
+  wrapper.style = "position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:9999;padding:20px;overflow:auto;font-family:sans-serif;";
+  wrapper.id = "admin_panel";
+
+  const html = `
+    <h2>⚙️ Админка тарифов</h2>
+    <p>Измените параметры и нажмите \"Сохранить\"</p>
+    <table border="1" cellpadding="8" style="border-collapse:collapse;width:100%;max-width:900px">
+      <thead>
+        <tr>
+          <th>Машина</th>
+          <th>Мин. тариф (₽)</th>
+          <th>₽/км начальный</th>
+          <th>₽/км минимальный</th>
+          <th>Коэфф. уменьшения</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${vehicles.map((v, i) => `
+          <tr>
+            <td>${v.name}</td>
+            <td><input type="number" value="${v.minTariff}" id="minTariff_${i}" style="width:100px"></td>
+            <td><input type="number" value="${v.basePerKm}" id="basePerKm_${i}" style="width:100px"></td>
+            <td><input type="number" value="${v.minPerKm}" id="minPerKm_${i}" style="width:100px"></td>
+            <td><input type="number" step="0.001" value="${v.decay}" id="decay_${i}" style="width:100px"></td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+    <br>
+    <button onclick="saveAdminTariffs()">💾 Сохранить</button>
+    <button onclick="loadFromGit()">🔄 Загрузить с Git</button>
+    <button onclick="closeAdminPanel()">❌ Закрыть</button>
+  `;
+
+  wrapper.innerHTML = html;
+  document.body.appendChild(wrapper);
+}
+
+function closeAdminPanel() {
+  const panel = document.getElementById("admin_panel");
+  if (panel) panel.remove();
+}
+
+function saveAdminTariffs() {
+  vehicles.forEach((v, i) => {
+    v.minTariff = parseInt(document.getElementById(`minTariff_${i}`).value);
+    v.basePerKm = parseFloat(document.getElementById(`basePerKm_${i}`).value);
+    v.minPerKm = parseFloat(document.getElementById(`minPerKm_${i}`).value);
+    v.decay = parseFloat(document.getElementById(`decay_${i}`).value);
+  });
+
+  // 🔧 Оборачиваем в объект для совместимости с loadTariffs
+  localStorage.setItem("custom_tariffs", JSON.stringify({ vehicles }));
+  alert("Тарифы обновлены! Используются новые значения.");
+  closeAdminPanel();
+}
+
+async function loadFromGit() {
+  await loadTariffs(true);
+  alert("Тарифы загружены с Git. Локальные замены сброшены.");
+  closeAdminPanel();
+}
+
+// Конец полного delivery.js
