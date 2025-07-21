@@ -13,29 +13,6 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/js/jquery.suggestions.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" />
-<style>
-  .btn {
-    padding: 10px 18px;
-    border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    cursor: pointer;
-    transition: 0.3s ease;
-  }
-  .btn.primary { background: #3459e6; color: white; }
-  .btn.success { background: #0b8e2d; color: white; }
-  .btn.outline { background: transparent; border: 1px solid #999; color: #333; }
-
-  .btn:hover { opacity: 0.9; }
-
-  label.checkbox {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 6px 0;
-    cursor: pointer;
-  }
-</style>
 
   <style>
     body {
@@ -94,28 +71,32 @@
 
 <h1>Калькулятор доставки плитки</h1>
 
-<div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px;">
-  <!-- Левая колонка: форма -->
-  <div style="flex: 1; min-width: 320px; max-width: 500px;">
-    <label for="address"><b>Введите адрес или кликните на карте:</b></label>
-    <input type="text" id="address" placeholder="например, г. Москва, ул. Ленина 10" style="width: 100%; margin-bottom: 15px;">
+<label for="address">Введите адрес или кликните на карте:</label>
+<input type="text" id="address" placeholder="например, г. Москва, ул. Ленина 10">
+<div id="map"></div>
 
-    <form id="deliveryForm">
-     <fieldset class="form-block">
-  <legend>Параметры доставки</legend>
+<form id="deliveryForm">
+  <fieldset>
+    <legend>Параметры доставки</legend>
 
-  <div class="form-row">
-    <label for="weight_standard">Вес стандартной плитки (кг):</label>
+    <label>Вес стандартной плитки (кг):</label>
     <input type="number" id="weight_standard" min="0" step="1">
-  </div>
 
-  <div class="form-row">
-    <label for="weight_large">Вес крупной плитки (кг):</label>
-    <input type="number" id="weight_large" min="0" step="1">
-  </div>
+    <label>Вес крупной плитки (кг):</label>
+    <input type="number" id="weight_large" min="0" step="1" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'block' : 'none';">
 
-  <div class="form-row">
-    <label for="loading_type">Тип загрузки:</label>
+    <div id="large_format_block" style="display:none;">
+      <label>Крупный формат плитки:</label>
+      <table id="large_format_table">
+        <thead>
+          <tr><th>Формат</th><th>Кол-во листов</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button type="button" onclick="addLargeFormatRow()">➕ Добавить формат</button>
+    </div>
+
+    <label>Тип загрузки:</label>
     <select id="loading_type">
       <option value="любая">Любая</option>
       <option value="верхняя">Верхняя</option>
@@ -123,36 +104,35 @@
       <option value="гидролифт">Гидролифт</option>
       <option value="manipulator">Манипулятор</option>
     </select>
-  </div>
 
-  <div class="form-check">
     <label><input type="checkbox" id="return_pallets"> Возврат тары</label>
-  </div>
-  <div class="form-check">
-    <label><input type="checkbox" id="underground"> Подземный паркинг</label>
-  </div>
-  <div class="form-check">
-    <label><input type="checkbox" id="precise_time"> Доставка к точному времени</label>
-  </div>
-  <div class="form-check">
-    <label><input type="checkbox" id="need_movers"> Нужны грузчики</label>
-  </div>
-</fieldset>
+    <label><input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';"> Подземный паркинг</label>
 
+    <div id="height_block" style="display:none; margin-left: 20px;">
+      <label>Ограничение по высоте (м):</label>
+      <input type="number" id="height_limit" min="1" step="0.1">
+    </div>
 
-   <div style="display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap;">
-  <button type="button" onclick="saveFormData()" class="btn primary">💾 Сохранить параметры</button>
-  <button type="button" onclick="calculateDelivery()" class="btn success">📦 Рассчитать стоимость</button>
-  <button type="button" onclick="openAdmin()" class="btn outline">🛠️ Админка</button>
-</div>
-</form>
-</div>
+    <label><input type="checkbox" id="precise_time" onchange="document.getElementById('time_block').style.display = this.checked ? 'block' : 'none';"> Доставка к точному времени</label>
 
+    <div id="time_block" style="display:none; margin-left: 20px;">
+      <label>Время:</label>
+      <input type="time" id="delivery_time">
+    </div>
 
-  <!-- Правая колонка: карта -->
-  <div id="map" style="flex: 1; min-width: 320px; height: 500px; border-radius: 6px;"></div>
-</div>
+    <label><input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';"> Нужны грузчики</label>
 
+    <div id="movers_block" style="display:none; margin-left: 20px;">
+      <label><input type="radio" name="only_unload" value="true" checked> Только выгрузка</label>
+      <label><input type="radio" name="only_unload" value="false"> Выгрузка и подъём</label><br>
+      Этаж: <input type="number" id="floor" min="1"><br>
+      <label><input type="radio" name="lift" value="true"> Есть лифт</label>
+      <label><input type="radio" name="lift" value="false" checked> Нет лифта</label>
+    </div>
+  </fieldset>
+
+  <button type="button" onclick="saveFormData()">Сохранить параметры</button>
+  <button type="button" onclick="calculateDelivery()">Рассчитать стоимость</button>
 </form>
 
 <div id="delivery_result"></div>
