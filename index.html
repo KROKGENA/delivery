@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Калькулятор доставки плитки</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Yandex.Maps -->
+  <!-- Yandex Maps -->
   <script src="https://api-maps.yandex.ru/2.1/?apikey=a181d434-9dec-492b-8838-73ec5df31ebb&lang=ru_RU"></script>
 
   <!-- Dadata -->
@@ -14,64 +14,20 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" />
 
   <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      margin: 20px;
-      color: #333;
-    }
-    input[type="text"], input[type="number"], select, input[type="time"] {
-      padding: 8px;
-      font-size: 15px;
-      width: 100%;
-      max-width: 400px;
-      margin-bottom: 12px;
-      box-sizing: border-box;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-    }
-    #map {
-      width: 100%;
-      height: 400px;
-      margin-top: 10px;
-      border-radius: 6px;
-    }
-    fieldset {
-      border: 1px solid #ccc;
-      padding: 20px;
-      border-radius: 8px;
-      background: #f9f9f9;
-      margin-top: 20px;
-    }
-    button {
-      background: #1e2d7d;
-      color: white;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin: 6px 6px 6px 0;
-    }
-    button:hover {
-      background: #0e1a5d;
-    }
-    #delivery_result {
-      margin-top: 20px;
-      padding: 15px;
-      border-left: 5px solid #1e2d7d;
-      background: #eef3ff;
-      border-radius: 6px;
-    }
+    body { font-family: sans-serif; margin: 20px; }
+    input, select { padding: 6px; margin: 6px 0; width: 100%; max-width: 400px; }
+    button { margin-top: 10px; padding: 10px 16px; cursor: pointer; }
+    fieldset { margin-top: 20px; padding: 10px; background: #f5f5f5; border-radius: 6px; }
+    #map { width: 100%; height: 400px; margin-top: 10px; }
+    #delivery_result { margin-top: 20px; padding: 10px; background: #eef; border-left: 4px solid #00f; }
   </style>
 </head>
 <body>
 
 <h1>Калькулятор доставки плитки</h1>
 
-<label for="address">Введите адрес или кликните на карте:</label>
-<input type="text" id="address" placeholder="например, г. Москва, ул. Ленина 10">
+<label>Адрес доставки:</label>
+<input type="text" id="address" placeholder="г. Москва, ул. Ленина 10" />
 <div id="map"></div>
 
 <form id="deliveryForm">
@@ -79,17 +35,15 @@
     <legend>Параметры доставки</legend>
 
     <label>Вес стандартной плитки (кг):</label>
-    <input type="number" id="weight_standard" min="0" step="1">
+    <input type="number" id="weight_standard" />
 
     <label>Вес крупной плитки (кг):</label>
-    <input type="number" id="weight_large" min="0" step="1" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'block' : 'none';">
+    <input type="number" id="weight_large" oninput="document.getElementById('large_format_block').style.display = this.value > 0 ? 'block' : 'none';" />
 
     <div id="large_format_block" style="display:none;">
-      <label>Крупный формат плитки:</label>
+      <label>Крупноформат:</label>
       <table id="large_format_table">
-        <thead>
-          <tr><th>Формат</th><th>Кол-во листов</th><th></th></tr>
-        </thead>
+        <thead><tr><th>Формат</th><th>Кол-во</th><th></th></tr></thead>
         <tbody></tbody>
       </table>
       <button type="button" onclick="addLargeFormatRow()">➕ Добавить формат</button>
@@ -104,29 +58,26 @@
       <option value="manipulator">Манипулятор</option>
     </select>
 
-    <label><input type="checkbox" id="return_pallets"> Возврат тары</label>
-    <label><input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';"> Подземный паркинг</label>
-
-    <div id="height_block" style="display:none; margin-left: 20px;">
+    <label><input type="checkbox" id="return_pallets" /> Возврат тары</label>
+    <label><input type="checkbox" id="underground" onchange="document.getElementById('height_block').style.display = this.checked ? 'block' : 'none';" /> Подземный паркинг</label>
+    <div id="height_block" style="display:none;">
       <label>Ограничение по высоте (м):</label>
-      <input type="number" id="height_limit" min="1" step="0.1">
+      <input type="number" id="height_limit" min="1" step="0.1" />
     </div>
 
-    <label><input type="checkbox" id="precise_time" onchange="document.getElementById('time_block').style.display = this.checked ? 'block' : 'none';"> Доставка к точному времени</label>
-
-    <div id="time_block" style="display:none; margin-left: 20px;">
+    <label><input type="checkbox" id="precise_time" onchange="document.getElementById('time_block').style.display = this.checked ? 'block' : 'none';" /> Доставка к точному времени</label>
+    <div id="time_block" style="display:none;">
       <label>Время:</label>
-      <input type="time" id="delivery_time">
+      <input type="time" id="delivery_time" />
     </div>
 
-    <label><input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';"> Нужны грузчики</label>
-
-    <div id="movers_block" style="display:none; margin-left: 20px;">
-      <label><input type="radio" name="only_unload" value="true" checked> Только выгрузка</label>
-      <label><input type="radio" name="only_unload" value="false"> Выгрузка и подъём</label><br>
-      Этаж: <input type="number" id="floor" min="1"><br>
-      <label><input type="radio" name="lift" value="true"> Есть лифт</label>
-      <label><input type="radio" name="lift" value="false" checked> Нет лифта</label>
+    <label><input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';" /> Нужны грузчики</label>
+    <div id="movers_block" style="display:none;">
+      <label><input type="radio" name="only_unload" value="true" checked /> Только выгрузка</label>
+      <label><input type="radio" name="only_unload" value="false" /> С подъёмом</label>
+      <label>Этаж:</label> <input type="number" id="floor" min="1" />
+      <label><input type="radio" name="lift" value="true" /> Есть лифт</label>
+      <label><input type="radio" name="lift" value="false" checked /> Нет лифта</label>
     </div>
   </fieldset>
 
@@ -137,25 +88,18 @@
 
 <div id="delivery_result"></div>
 
-<!-- delivery.js: подключаем логику -->
 <script src="delivery.js"></script>
-
-<!-- автоинициализация при загрузке страницы -->
 <script>
+  const warehouse = [54.907129, 38.054109];
+  let clientPlacemark = null;
+  let routeLine = null;
+
   window.onload = () => {
     loadTariffs(); // загружаем тарифы
   };
 
-  const warehouse = [54.907129, 38.054109];
-  let clientPlacemark = null;
-  let routeLine = null;
-  let formData = {};
-
   ymaps.ready(() => {
-    const map = new ymaps.Map("map", {
-      center: warehouse,
-      zoom: 9
-    });
+    const map = new ymaps.Map("map", { center: warehouse, zoom: 9 });
 
     const warehousePlacemark = new ymaps.Placemark(warehouse, {
       balloonContent: "Склад"
@@ -198,38 +142,36 @@
         routeLine = route;
         map.geoObjects.add(routeLine);
         const distanceKm = route.getLength() / 1000;
-        formData.deliveryDistance = distanceKm;
+        window.formData = window.formData || {};
+        window.formData.deliveryDistance = distanceKm;
         console.log("📏 Расстояние до клиента:", distanceKm.toFixed(2), "км");
-      }, () => {
-        alert("Не удалось построить маршрут");
       });
     }
   });
 
   function saveFormData() {
-  window.formData = {
-    weight_standard: parseInt(document.getElementById("weight_standard").value) || 0,
-    weight_large: parseInt(document.getElementById("weight_large").value) || 0,
-    loading_type: document.getElementById("loading_type").value,
-    return_pallets: document.getElementById("return_pallets").checked,
-    underground: document.getElementById("underground").checked,
-    height_limit: document.getElementById("height_limit").value,
-    precise_time: document.getElementById("precise_time").checked,
-    delivery_time: document.getElementById("delivery_time").value,
-    need_movers: document.getElementById("need_movers").checked,
-    only_unload: document.querySelector("input[name='only_unload']:checked").value,
-    floor: document.getElementById("floor").value,
-    lift: document.querySelector("input[name='lift']:checked").value,
-    large_sheets: Array.from(document.querySelectorAll("#large_format_table tbody tr")).map(row => {
-      return {
-        format: row.querySelector("select").value,
-        count: row.querySelector("input").value
-      };
-    })
-  };
-  alert("Параметры сохранены!");
-}
-
+    window.formData = {
+      weight_standard: parseInt(document.getElementById("weight_standard").value) || 0,
+      weight_large: parseInt(document.getElementById("weight_large").value) || 0,
+      loading_type: document.getElementById("loading_type").value,
+      return_pallets: document.getElementById("return_pallets").checked,
+      underground: document.getElementById("underground").checked,
+      height_limit: document.getElementById("height_limit").value,
+      precise_time: document.getElementById("precise_time").checked,
+      delivery_time: document.getElementById("delivery_time").value,
+      need_movers: document.getElementById("need_movers").checked,
+      only_unload: document.querySelector("input[name='only_unload']:checked").value,
+      floor: document.getElementById("floor").value,
+      lift: document.querySelector("input[name='lift']:checked").value,
+      large_sheets: Array.from(document.querySelectorAll("#large_format_table tbody tr")).map(row => {
+        return {
+          format: row.querySelector("select").value,
+          count: row.querySelector("input").value
+        };
+      })
+    };
+    alert("Параметры сохранены!");
+  }
 
   function addLargeFormatRow() {
     const tbody = document.querySelector("#large_format_table tbody");
@@ -237,9 +179,7 @@
 
     const formatCell = document.createElement("td");
     const select = document.createElement("select");
-    const formats = ["", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300",
-                     "120x240", "120x278", "120x280", "120x300",
-                     "159x324", "160x320", "162x324", "80x324"];
+    const formats = ["", "100x200", "100x260", "100x280", "100x290", "100x295", "100x299", "100x300", "120x240", "120x278", "120x280", "120x300", "159x324", "160x320", "162x324", "80x324"];
     formats.forEach(f => {
       const option = document.createElement("option");
       option.value = f;
@@ -268,6 +208,5 @@
     tbody.appendChild(row);
   }
 </script>
-
 </body>
 </html>
