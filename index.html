@@ -301,30 +301,35 @@
     <span class="slider-switch"></span>
   </label>
 
- <div class="radio-group">
-  <label class="radio-option">
-    <input type="radio" name="only_unload" value="true" checked>
-    <span>Только выгрузка</span>
-  </label>
-  <label class="radio-option">
-    <input type="radio" name="only_unload" value="false">
-    <span>Выгрузка и подъём</span>
-  </label>
+ <div id="movers_block" style="display: none; margin-left: 20px;">
+  <div class="radio-group" id="unload_type_group">
+    <label class="radio-option">
+      <input type="radio" name="only_unload" value="true" checked onchange="updateMoversBlock()">
+      <span>Только выгрузка</span>
+    </label>
+    <label class="radio-option">
+      <input type="radio" name="only_unload" value="false" onchange="updateMoversBlock()">
+      <span>Выгрузка и подъём</span>
+    </label>
+  </div>
+
+  <div id="floor_block" class="animated-block">
+    <label for="floor">Этаж:</label>
+    <input type="number" id="floor" min="1" style="margin-bottom: 12px;">
+  </div>
+
+  <div id="lift_block" class="radio-group animated-block">
+    <label class="radio-option">
+      <input type="radio" name="lift" value="true">
+      <span>Есть лифт</span>
+    </label>
+    <label class="radio-option">
+      <input type="radio" name="lift" value="false" checked>
+      <span>Нет лифта</span>
+    </label>
+  </div>
 </div>
 
-<label for="floor">Этаж:</label>
-<input type="number" id="floor" min="1" style="margin-bottom: 12px;">
-
-<div class="radio-group">
-  <label class="radio-option">
-    <input type="radio" name="lift" value="true">
-    <span>Есть лифт</span>
-  </label>
-  <label class="radio-option">
-    <input type="radio" name="lift" value="false" checked>
-    <span>Нет лифта</span>
-  </label>
-</div>
 
 </fieldset>
 
