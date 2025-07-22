@@ -1,7 +1,7 @@
 {
   "vehicles": [
-    { "name": "а/м до 1т", "minTariff": 2500, "basePerKm": 155, "minPerKm": 60, "decay": 0.01 },
-    { "name": "а/м до 1.5т", "minTariff": 2500, "basePerKm": 165, "minPerKm": 60, "decay": 0.01 },
+    { "name": "а/м до 1т", "minTariff": 1600, "basePerKm": 150, "minPerKm": 60, "decay": 0.015 },
+    { "name": "а/м до 1.5т", "minTariff": 1700, "basePerKm": 152, "minPerKm": 60, "decay": 0.015 },
     { "name": "а/м до 3т", "minTariff": 2500, "basePerKm": 190, "minPerKm": 65, "decay": 0.01 },
     { "name": "а/м 5т", "minTariff": 5000, "basePerKm": 195, "minPerKm": 75, "decay": 0.01 },
     { "name": "а/м 5т гидролифт", "minTariff": 6000, "basePerKm": 195, "minPerKm": 75, "decay": 0.01 },
