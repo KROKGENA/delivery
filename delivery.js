@@ -302,7 +302,9 @@ async function calculateDelivery() {
     </div>
   `;
 
-  document.getElementById("delivery_result").innerHTML = compactHtml;
+document.getElementById("delivery_result").innerHTML = compactHtml;
+document.getElementById("delivery_result").scrollIntoView({ behavior: "smooth" });
+
 }
 
 function toggleDetails(e) {
