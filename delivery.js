@@ -325,6 +325,14 @@ function toggleDetails(e) {
 // ... calculateDelivery и toggleDetails уже добавлены
 
 function openAdminPanel() {
+  const correctPassword = "315920"; // 🔐 твой пароль — можно изменить
+
+  const input = prompt("Введите пароль для доступа к админке:");
+  if (input !== correctPassword) {
+    alert("Неверный пароль.");
+    return;
+  }
+
   if (vehicles.length === 0) {
     alert("Сначала загрузите тарифы");
     return;
@@ -336,7 +344,7 @@ function openAdminPanel() {
 
   const html = `
     <h2>⚙️ Админка тарифов</h2>
-    <p>Измените параметры и нажмите \"Сохранить\"</p>
+    <p style="color:gray;">⚠️ Изменения временные и исчезают после обновления страницы</p>
     <table border="1" cellpadding="8" style="border-collapse:collapse;width:100%;max-width:900px">
       <thead>
         <tr>
@@ -368,6 +376,7 @@ function openAdminPanel() {
   wrapper.innerHTML = html;
   document.body.appendChild(wrapper);
 }
+
 
 function closeAdminPanel() {
   const panel = document.getElementById("admin_panel");
