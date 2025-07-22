@@ -225,6 +225,17 @@
   background: #f3f8ff;
   border-color: #2196F3;
 }
+.animated-block {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.4s ease;
+  opacity: 0;
+}
+
+.animated-block.visible {
+  max-height: 300px;
+  opacity: 1;
+}
 
   </style>
 </head>
@@ -297,7 +308,11 @@
 
   <label class="switch-label">
     Нужны грузчики
-    <input type="checkbox" id="need_movers" onchange="document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';">
+    <input type="checkbox" id="need_movers" onchange="
+  document.getElementById('movers_block').style.display = this.checked ? 'block' : 'none';
+  if (this.checked) updateMoversBlock();
+">
+
     <span class="slider-switch"></span>
   </label>
 
@@ -477,6 +492,20 @@
     window.formData = formData;
     alert("Параметры сохранены!");
   }
+  function updateMoversBlock() {
+  const isOnlyUnload = document.querySelector("input[name='only_unload']:checked").value === "true";
+
+  const floorBlock = document.getElementById("floor_block");
+  const liftBlock = document.getElementById("lift_block");
+
+  if (isOnlyUnload) {
+    floorBlock.classList.remove("visible");
+    liftBlock.classList.remove("visible");
+  } else {
+    floorBlock.classList.add("visible");
+    liftBlock.classList.add("visible");
+  }
+}
 </script>
 
 <script src="delivery.js"></script>
