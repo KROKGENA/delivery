@@ -4,6 +4,7 @@ async function loadTariffs(forceReloadFromGit = false) {
   try {
     const basePath = location.pathname.includes("/delivery/") ? "/delivery/" : "/";
     const saved = localStorage.getItem("custom_tariffs");
+const basePath = "";
 
     if (saved && !forceReloadFromGit) {
       const parsed = JSON.parse(saved);
