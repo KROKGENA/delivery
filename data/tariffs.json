@@ -9,6 +9,6 @@
     { "name": "Еврофура 20т", "minTariff": 5000, "basePerKm": 800, "minPerKm": 100, "decay": 0.045 },
     { "name": "Манипулятор 5т", "minTariff": 1500, "basePerKm": 600, "minPerKm": 85, "decay": 0.045 },
     { "name": "Манипулятор 10т", "minTariff": 3000, "basePerKm": 650, "minPerKm": 110, "decay": 0.05 },
-    { "name": "Манипулятор 15т", "minTariff": 5000, "basePerKm": 700, "minPerKm": 120, "decay": 0.05 }
+    { "name": "Манипулятор 15т", "minTariff": 6000, "basePerKm": 700, "minPerKm": 120, "decay": 0.045 }
   ]
   }
