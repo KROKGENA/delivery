@@ -228,10 +228,6 @@ if (!formData.deliveryDistance || formData.deliveryDistance === 0) {
     await loadTariffs();
   }
 
-  if (!window.formData) {
-    alert("Сначала сохраните параметры");
-    return;
-  }
 
   const data = window.formData;
   const totalWeight = (data.weight_standard || 0) + (data.weight_large || 0);
