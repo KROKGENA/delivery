@@ -402,25 +402,33 @@
       }
     });
 
-    function setClientPoint(coords) {
-      if (clientPlacemark) map.geoObjects.remove(clientPlacemark);
-      if (routeLine) map.geoObjects.remove(routeLine);
+function setClientPoint(coords) {
+  if (clientPlacemark) map.geoObjects.remove(clientPlacemark);
+  if (routeLine) map.geoObjects.remove(routeLine);
 
-      clientPlacemark = new ymaps.Placemark(coords, {
-        balloonContent: "Клиент"
-      }, {
-        preset: "islands#greenIcon",
-        iconCaption: "Клиент"
-      });
-      map.geoObjects.add(clientPlacemark);
+  clientPlacemark = new ymaps.Placemark(coords, {
+    balloonContent: "Клиент"
+  }, {
+    preset: "islands#greenIcon",
+    iconCaption: "Клиент"
+  });
+  map.geoObjects.add(clientPlacemark);
 
-      ymaps.route([warehouse, coords], { routingMode: "auto" }).then(route => {
-        routeLine = route;
-        map.geoObjects.add(routeLine);
-        const distanceKm = route.getLength() / 1000;
-        window.deliveryDistance = distanceKm;
-      }, () => {
-        alert("Не удалось построить маршрут");
+  // 🔽 Добавляем получение адреса
+  ymaps.geocode(coords).then(function (res) {
+    const firstGeoObject = res.geoObjects.get(0);
+    const address = firstGeoObject.getAddressLine();
+    document.getElementById("address").value = address;
+    formData.deliveryAddress = address;
+  });
+
+  ymaps.route([warehouse, coords], { routingMode: "auto" }).then(route => {
+    routeLine = route;
+    map.geoObjects.add(routeLine);
+    const distanceKm = route.getLength() / 1000;
+    window.deliveryDistance = distanceKm;
+  }, () => {
+    alert("Не удалось построить маршрут");
       });
     }
   });
