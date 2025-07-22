@@ -211,6 +211,19 @@ function getLoadingSurcharge(vehicle, loadingType) {
 
 
 async function calculateDelivery() {
+  saveFormData(); // сохраняем всё сразу, без кнопки
+
+if (
+  (formData.weight_standard + formData.weight_large) === 0
+) {
+  alert("⚠️ Укажите вес плитки (стандартной или крупной).");
+  return;
+}
+
+if (!formData.deliveryDistance || formData.deliveryDistance === 0) {
+  alert("⚠️ Укажите адрес — вручную или нажмите на карте.");
+  return;
+}
   if (vehicles.length === 0) {
     await loadTariffs();
   }
