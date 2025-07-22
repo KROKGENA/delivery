@@ -180,6 +180,51 @@
 .switch-label input:checked + .slider-switch::before {
   transform: translateX(24px);
 }
+.radio-group {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+
+.radio-option {
+  position: relative;
+  flex: 1 1 45%;
+  padding: 10px 12px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s;
+  user-select: none;
+  font-size: 15px;
+}
+
+.radio-option input[type="radio"] {
+  display: none;
+}
+
+.radio-option input[type="radio"]:checked + span {
+  font-weight: bold;
+  color: #fff;
+}
+
+.radio-option input[type="radio"]:checked + span::before {
+  content: "✔ ";
+}
+
+.radio-option input[type="radio"]:checked ~ span {
+  background-color: #2196F3;
+  color: white;
+  border-radius: 6px;
+  padding: 4px 8px;
+  display: inline-block;
+}
+
+.radio-option:hover {
+  background: #f3f8ff;
+  border-color: #2196F3;
+}
 
   </style>
 </head>
@@ -256,13 +301,31 @@
     <span class="slider-switch"></span>
   </label>
 
-  <div id="movers_block" style="display:none; margin-left: 20px;">
-    <label><input type="radio" name="only_unload" value="true" checked> Только выгрузка</label>
-    <label><input type="radio" name="only_unload" value="false"> Выгрузка и подъём</label><br>
-    Этаж: <input type="number" id="floor" min="1"><br>
-    <label><input type="radio" name="lift" value="true"> Есть лифт</label>
-    <label><input type="radio" name="lift" value="false" checked> Нет лифта</label>
-  </div>
+ <div class="radio-group">
+  <label class="radio-option">
+    <input type="radio" name="only_unload" value="true" checked>
+    <span>Только выгрузка</span>
+  </label>
+  <label class="radio-option">
+    <input type="radio" name="only_unload" value="false">
+    <span>Выгрузка и подъём</span>
+  </label>
+</div>
+
+<label for="floor">Этаж:</label>
+<input type="number" id="floor" min="1" style="margin-bottom: 12px;">
+
+<div class="radio-group">
+  <label class="radio-option">
+    <input type="radio" name="lift" value="true">
+    <span>Есть лифт</span>
+  </label>
+  <label class="radio-option">
+    <input type="radio" name="lift" value="false" checked>
+    <span>Нет лифта</span>
+  </label>
+</div>
+
 </fieldset>
 
 
