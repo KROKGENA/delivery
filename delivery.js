@@ -167,7 +167,7 @@ if (standard > 0) {
     if (hasLift) {
       // Лифт есть
       const cost = unload + baseLift;
-      total += cost < 2000 ? 2000 : cost;
+      total += cost < 4000 ? 4000 : cost;
     } else {
       // Лифта нет, подъём вручную с 2 этажа
       const extraFloors = Math.max(0, floor - 1);
@@ -177,9 +177,10 @@ if (standard > 0) {
     }
   } else {
     // Только выгрузка
-    total += unload;
+    total += unload < 3000 ? 3000 : unload;
   }
 }
+
 
 
   return total;
